@@ -121,6 +121,7 @@ impl IOC {
     fn deploy(&self) -> std::io::Result<()> {
         println!("deploying: {:?}", self.name);
         if self.destination.exists(){
+            self.check_hash().unwrap();
             fs::remove_dir_all(&self.destination)?;  // prep stage
         }
         self.hash_ioc()?;
@@ -129,23 +130,24 @@ impl IOC {
     }
 
     /// check whether destination has been tempered with
-    fn check_destination(&self) -> bool {
+    fn check_hash(&self) -> Result<String, String> {
         let mut hash = String::from("");
         if let Ok(lines) = read_lines(&self.hash_file) {
             if let Ok(stored_hash) = lines.last().unwrap(){
                 hash = stored_hash;
             };
         }
-        println!("== stored hash =============> {}", hash);
-        println!("== current hash ============> {}", calc_directory_hash(&self.destination));
 
-        let dst = self.destination.as_path().join(&self.name);
-        // 1. exists
-        let exists = dst.is_dir();
-        // 2. has_md5
-        // 3. calc md5 from destination
-        // 4. is md5 identical
-        exists
+        let valid_hash = match hash == calc_directory_hash(&self.destination) {
+            false => return Err("hashed do not match".to_string()),
+            true => hash,
+        };
+
+        Ok(valid_hash)
+
+        // println!("== stored hash =============> {}", hash);
+        // println!("== current hash ============> {}", calc_directory_hash(&self.destination));
+        // hash == calc_directory_hash(&self.destination);
     }
 }
 
@@ -238,7 +240,6 @@ fn main() {
 
     for ioc in &ioc_list {
         println!("{:?}", ioc);
-        println!("destination exists: {}", ioc.check_destination());
         _= ioc.stage();
         _= ioc.deploy();
         println!("{}",ioc.render().unwrap());
