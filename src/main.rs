@@ -66,14 +66,14 @@ impl IOC {
 
     }
 
-    fn render(&self) -> Result<String, Error> {
+    fn render(&self, template_dir: &String) -> Result<String, Error> {
 
         let user_name = match get_current_username(){
             Some(uname) => uname,
             None => "unkown".into(),
         };
 
-        let tera = match Tera::new("templates/*.tera") {
+        let tera = match Tera::new(&template_dir) {
             Ok(t) => t,
             Err(e) => {
                 println!("Parsing error(s): {}", e);
@@ -92,22 +92,25 @@ impl IOC {
         tera.render("startup.tera", &context)
     }
 
-    fn wrap_startup(&self) -> std::io::Result<()> {
+    fn wrap_startup(&self, template_dir: &String) -> std::io::Result<()> {
         let old = &self.stage.join("startup.iocsh");
         let ioc_startup = "startup.iocsh_".to_owned() + &self.name;
         let new = &self.stage.join(ioc_startup);
         fs::copy(old.as_path(), new.as_path())?;
-        write_file(&old, self.render().unwrap())?;
+        println!("staging: copied {:?} -> {:?}", &old.as_path(), &new.as_path());
+        write_file(&old, self.render(template_dir).unwrap())?;
         Ok(())
     }
 
-    fn stage(&self) -> std::io::Result<()> {
+    fn stage(&self, template_dir: &String) -> std::io::Result<()> {
         println!("staging: {:?}", self.name);
         if self.stage.exists(){
             fs::remove_dir_all(&self.stage)?;  // prep stage directory
         }
+        println!("staging: {:?} removed", &self.stage.as_path());
         copy_recursively(&self.source, &self.stage)?;
-        self.wrap_startup()?;
+        println!("staging: copied {:?} -> {:?}", &self.source.as_path(), &self.stage.as_path());
+        self.wrap_startup(template_dir)?;
         Ok(())
     }
 
@@ -220,6 +223,8 @@ fn main() {
     let stage_root = "stage/";
     let deploy_root = "deploy/ioc/";
 
+    let template_dir = &cli.template_dir.unwrap_or("templates/*.tera".to_string());
+
     
     match &cli.command {
         Some(Commands::Install { dryrun, force, iocs }) => {
@@ -247,7 +252,7 @@ fn main() {
                     }
                 }
                 // staging
-                _= ioc.stage();
+                _= ioc.stage(template_dir);
                 // deploy
                 if !dryrun{
                     _= ioc.deploy();
