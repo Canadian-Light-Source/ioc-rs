@@ -130,6 +130,10 @@ impl IOC {
 
     /// check whether destination has been tempered with
     fn check_hash(&self) -> Result<String, String> {
+        // destination doesn't exist yet, that's fine
+        if !self.destination.exists() {
+            return Ok("destination does not yet exist. No hash expected.".to_string());
+        }
         let mut hash = String::from("");
         if let Ok(lines) = read_lines(&self.hash_file) {
             if let Ok(stored_hash) = lines.last().unwrap(){
@@ -189,7 +193,7 @@ pub fn copy_recursively(source: impl AsRef<Path>, destination: impl AsRef<Path>)
         let filetype = entry.file_type()?;
         if filetype.is_dir() {
             // copy_recursively(entry.path(), destination.as_ref().join(entry.file_name()))?;
-            copy_recursively(entry.path(), destination.as_ref())?;
+            copy_recursively(entry.path(), destination.as_ref())?;  // flatten the structure
         } else {
             fs::copy(entry.path(), destination.as_ref().join(entry.file_name()))?;
         }
@@ -234,7 +238,7 @@ fn main() {
                 // temper check
                 let hash = ioc.check_hash();
                 if let Ok(ioc_hash) = &hash {
-                    println!("IOC {} has valid hash {} ... proceeding", &ioc.name, ioc_hash);
+                    println!("IOC {} has valid hash |{}| ... proceeding", &ioc.name, ioc_hash);
                 }
                 if let Err(err) = &hash {
                     if !force {
