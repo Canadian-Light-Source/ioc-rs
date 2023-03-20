@@ -1,15 +1,21 @@
-use std::path::{Path, PathBuf};
 use std::env;
-use std::fs;
+
 
 use clap::{Parser};
-pub mod cli;
-use cli::{Cli, Commands};
 
 use tera::{Context, Tera, Error};
 use users::get_current_username;
 use chrono::prelude::*;
 
+use std::path::{Path, PathBuf};
+
+use std::fs::{File};
+use std::io::prelude::*;
+use std::fs;
+
+// my mods
+pub mod cli;
+use cli::{Cli, Commands};
 
 /// IOC structure
 #[derive(Debug)]
@@ -55,7 +61,7 @@ impl IOC {
 
     }
 
-    fn wrap_startup(&self) -> Result<String, Error> {
+    fn render(&self) -> Result<String, Error> {
 
         let user_name = match get_current_username(){
             Some(uname) => uname,
@@ -81,12 +87,22 @@ impl IOC {
         tera.render("startup.tera", &context)
     }
 
+    fn wrap_startup(&self) -> std::io::Result<()> {
+        let old = &self.stage.join("startup.iocsh");
+        let ioc_startup = "startup.iocsh_".to_owned() + &self.name;
+        let new = &self.stage.join(ioc_startup);
+        fs::copy(old.as_path(), new.as_path())?;
+        write_file(&old, self.render().unwrap())?;
+        Ok(())
+    }
+
     fn stage(&self) -> std::io::Result<()> {
         println!("staging: {:?}", self.name);
         if self.stage.exists(){
             fs::remove_dir_all(&self.stage)?;  // prep stage
         }
         copy_recursively(&self.source, &self.stage)?;
+        self.wrap_startup()?;
         Ok(())
     }
 
@@ -121,6 +137,12 @@ fn collect_iocs(ioc_names: &Vec<String>, stage_root: impl AsRef<Path>, destinati
         };
     }
     iocs
+}
+
+fn write_file(file_name: impl AsRef<Path>, content: String) -> std::io::Result<()> {
+    let mut file = File::create(file_name)?;
+    file.write_all(content.as_bytes())?;
+    Ok(())
 }
 
 /// Copy files from source to destination recursively.
@@ -168,6 +190,6 @@ fn main() {
         println!("destination exists: {}", ioc.check_destination());
         _= ioc.stage();
         _= ioc.deploy();
-        println!("{}",ioc.wrap_startup().unwrap());
+        println!("{}",ioc.render().unwrap());
     }
 }
