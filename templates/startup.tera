@@ -1,0 +1,8 @@
+{% include "header.tera" %}
+
+epicsEnvSet IOC {{ IOC }}
+epicsEnvSet ENGINEER {{ user }}
+
+< startup.iocsh_{{ IOC }}
+
+{% include "footer.tera" %}

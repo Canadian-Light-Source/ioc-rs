@@ -6,6 +6,11 @@ use clap::{Parser};
 pub mod cli;
 use cli::{Cli, Commands};
 
+use tera::{Context, Tera, Error};
+use users::get_current_username;
+use chrono::prelude::*;
+
+
 /// IOC structure
 #[derive(Debug)]
 struct IOC{
@@ -47,7 +52,33 @@ impl IOC {
             }),
             false => Err("no such file or directory")
         }
-        
+
+    }
+
+    fn wrap_startup(&self) -> Result<String, Error> {
+
+        let user_name = match get_current_username(){
+            Some(uname) => uname,
+            None => "unkown".into(),
+        };
+
+        let tera = match Tera::new("templates/*.tera") {
+            Ok(t) => t,
+            Err(e) => {
+                println!("Parsing error(s): {}", e);
+                ::std::process::exit(1);
+            }
+        };
+
+        let local: DateTime<Local> = Local::now();
+        let formatted = format!("{}", local.format("%Y-%m-%d %H:%M:%S.%f"));
+        let mut context = Context::new();
+        context.insert("IOC", &self.name);
+        context.insert("user", &user_name.as_os_str().to_str());
+        context.insert("destination", &self.destination);
+        context.insert("date", &formatted);
+
+        tera.render("startup.tera", &context)
     }
 
     fn stage(&self) -> std::io::Result<()> {
@@ -137,5 +168,6 @@ fn main() {
         println!("destination exists: {}", ioc.check_destination());
         _= ioc.stage();
         _= ioc.deploy();
+        println!("{}",ioc.wrap_startup().unwrap());
     }
 }
