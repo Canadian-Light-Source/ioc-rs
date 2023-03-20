@@ -101,10 +101,22 @@ impl IOC {
         Ok(())
     }
 
+    // fn pre_check(&self) {
+    //     if self.destination.exists(){
+    //         let hash = self.check_hash();
+    //         match hash {
+    //             Ok(h) => (),
+    //             Err(e) => {
+    //                 println!("The destination {:?} was tempered with.\nError: {}", &self.destination, e);
+    //             }
+    //         }
+    //     }
+    // }
+
     fn stage(&self) -> std::io::Result<()> {
         println!("staging: {:?}", self.name);
         if self.stage.exists(){
-            fs::remove_dir_all(&self.stage)?;  // prep stage
+            fs::remove_dir_all(&self.stage)?;  // prep stage directory
         }
         copy_recursively(&self.source, &self.stage)?;
         self.wrap_startup()?;
@@ -121,8 +133,7 @@ impl IOC {
     fn deploy(&self) -> std::io::Result<()> {
         println!("deploying: {:?}", self.name);
         if self.destination.exists(){
-            self.check_hash().unwrap();
-            fs::remove_dir_all(&self.destination)?;  // prep stage
+            fs::remove_dir_all(&self.destination)?;  // prep deploy directory
         }
         self.hash_ioc()?;
         copy_recursively(&self.stage, &self.destination)?;
@@ -139,15 +150,11 @@ impl IOC {
         }
 
         let valid_hash = match hash == calc_directory_hash(&self.destination) {
-            false => return Err("hashed do not match".to_string()),
+            false => return Err("hashes do not match".to_string()),
             true => hash,
         };
-
         Ok(valid_hash)
 
-        // println!("== stored hash =============> {}", hash);
-        // println!("== current hash ============> {}", calc_directory_hash(&self.destination));
-        // hash == calc_directory_hash(&self.destination);
     }
 }
 
@@ -240,6 +247,15 @@ fn main() {
 
     for ioc in &ioc_list {
         println!("{:?}", ioc);
+        let hash = ioc.check_hash();
+        // if let Ok(description) = &hash {
+        //     println!("{}", description);
+        // }
+        if let Err(err) = &hash {
+            println!("Error: {}\n --> skipping <{}>", err, &ioc.name);
+            continue;
+        }
+        // _= ioc.pre_check();
         _= ioc.stage();
         _= ioc.deploy();
         println!("{}",ioc.render().unwrap());
