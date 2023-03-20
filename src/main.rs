@@ -248,7 +248,6 @@ fn main() {
                 if !dryrun{
                     _= ioc.deploy();
                 }
-                println!("{}",ioc.render().unwrap());
             }
         }
         None => println!("NO ACTION --> BYE")
