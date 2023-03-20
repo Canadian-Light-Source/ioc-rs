@@ -101,18 +101,6 @@ impl IOC {
         Ok(())
     }
 
-    // fn pre_check(&self) {
-    //     if self.destination.exists(){
-    //         let hash = self.check_hash();
-    //         match hash {
-    //             Ok(h) => (),
-    //             Err(e) => {
-    //                 println!("The destination {:?} was tempered with.\nError: {}", &self.destination, e);
-    //             }
-    //         }
-    //     }
-    // }
-
     fn stage(&self) -> std::io::Result<()> {
         println!("staging: {:?}", self.name);
         if self.stage.exists(){
@@ -225,19 +213,17 @@ fn calc_directory_hash(dir: impl AsRef<Path>) -> String {
 fn main() {
     let cli = Cli::parse();
 
-    // let destination = env::current_dir().unwrap().as_path().join("TEST/ioc");
     let stage_root = "stage/";
     let deploy_root = "deploy/ioc/";
 
-    let mut ioc_list: Vec<IOC> = Vec::new();
-
+    
     match &cli.command {
         Some(Commands::Install { dryrun, force, iocs }) => {
             println!("INSTALL");
             println!("\t dryrun: {}", dryrun);
             println!("\t force:  {}", force);
-            match iocs {
-                Some(i) => ioc_list = collect_iocs(i, &stage_root, &deploy_root),
+            let ioc_list = match iocs {
+                Some(i) => collect_iocs(i, &stage_root, &deploy_root),
                 None => panic!(),
             };
             // worker
@@ -245,6 +231,7 @@ fn main() {
             for ioc in &ioc_list {
                 println!("-------------------------------------------------");
                 println!("{:?}", ioc);
+                // temper check
                 let hash = ioc.check_hash();
                 if let Ok(ioc_hash) = &hash {
                     println!("IOC {} has valid hash {} ... proceeding", &ioc.name, ioc_hash);
@@ -255,13 +242,14 @@ fn main() {
                         continue;
                     }
                 }
-                // _= ioc.pre_check();
+                // staging
                 _= ioc.stage();
-                _= ioc.deploy();
+                // deploy
+                if !dryrun{
+                    _= ioc.deploy();
+                }
                 println!("{}",ioc.render().unwrap());
             }
-            // call deploy routine if not dryrun
-            // install_iocs(targets, &destination)
         }
         None => println!("NO ACTION --> BYE")
     }
