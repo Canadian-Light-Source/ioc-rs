@@ -189,7 +189,7 @@ pub fn copy_recursively(source: impl AsRef<Path>, destination: impl AsRef<Path>)
         let filetype = entry.file_type()?;
         if filetype.is_dir() {
             // copy_recursively(entry.path(), destination.as_ref().join(entry.file_name()))?;
-            copy_recursively(entry.path(), destination.as_ref())?;
+            copy_recursively(entry.path(), destination.as_ref())?;  // flatten the structure
         } else {
             fs::copy(entry.path(), destination.as_ref().join(entry.file_name()))?;
         }
