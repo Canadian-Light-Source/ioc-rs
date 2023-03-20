@@ -7,9 +7,13 @@ use clap::{Parser, Subcommand};
 #[command(version = "0.1.0")]
 #[command(about = "install ioc definitions", long_about = None)]
 pub struct Cli {
-    /// Path to the deployment destination
+    // /// Path to the deployment destination
+    // #[arg(short, long)]
+    // path: Option<String>,
+
+    /// Path to the tempalte directory
     #[arg(short, long)]
-    path: Option<String>,
+    pub template_dir: Option<String>,
 
     /// The name of the command
     #[command(subcommand)]
