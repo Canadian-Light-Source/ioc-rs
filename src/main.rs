@@ -1,5 +1,6 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::env;
+use std::fs;
 
 use clap::{Parser};
 pub mod cli;
@@ -8,25 +9,63 @@ use cli::{Cli, Commands};
 /// IOC structure
 #[derive(Debug)]
 struct IOC{
+    /// name of the IOC
     name: String,
+    /// source of the IOC definition
     source: PathBuf,
+    /// staging directory
+    stage: PathBuf,
+    /// data directory for checksum
+    data: PathBuf,
+    /// deploy directory for IOC
     destination: PathBuf,
 }
 
 /// IOC structure implementation
 impl IOC {
     /// Creates a new IOC structure
-    fn new(name: &String, destination: &PathBuf) -> Result<IOC, &'static str> {
+    fn new(
+        name: &String,
+        stage_root: impl AsRef<Path>,
+        destination_root: impl AsRef<Path>)
+        -> Result<IOC, &'static str> {
         let mut working_dir = env::current_dir().unwrap();
-        if name.len()>0{
+        if name.len()>0 {
             working_dir = working_dir.as_path().join(&name);
         }
+        let stage = stage_root.as_ref().join(&name);
+        let destination = destination_root.as_ref().join(&name);
+        let data = destination_root.as_ref().join("data").join(&name);
         // check source exists
         match working_dir.is_dir() {
-            true => Ok(IOC { name: name.to_string(), source: working_dir, destination: destination.to_path_buf() }),
+            true => Ok(IOC {
+                name: name.to_string(),
+                source: working_dir,
+                stage: stage,
+                data: data,
+                destination: destination,
+            }),
             false => Err("no such file or directory")
         }
         
+    }
+
+    fn stage(&self) -> std::io::Result<()> {
+        println!("staging: {:?}", self.name);
+        if self.stage.exists(){
+            fs::remove_dir_all(&self.stage)?;  // prep stage
+        }
+        copy_recursively(&self.source, &self.stage)?;
+        Ok(())
+    }
+
+    fn deploy(&self) -> std::io::Result<()> {
+        println!("deploying: {:?}", self.name);
+        if self.destination.exists(){
+            fs::remove_dir_all(&self.destination)?;  // prep stage
+        }
+        copy_recursively(&self.stage, &self.destination)?;
+        Ok(())
     }
 
     /// check whether destination has been tempered with
@@ -41,38 +80,50 @@ impl IOC {
     }
 }
 
-// fn install_iocs(iocs: &Vec<String>, dst: &PathBuf){
-//     for ioc in iocs{
-//         install_ioc(ioc, dst);
-//     }
-// }
 
-
-
-fn collect_iocs(ioc_names: &Vec<String>, destination: &PathBuf) -> Vec<IOC>{
-    let mut IOCs: Vec<IOC> = Vec::new();
+fn collect_iocs(ioc_names: &Vec<String>, stage_root: impl AsRef<Path>, destination_root: impl AsRef<Path>) -> Vec<IOC>{
+    let mut iocs: Vec<IOC> = Vec::new();
     for name in ioc_names.iter() {
-        match IOC::new(name, &destination) {
-            Ok(new_ioc) => IOCs.push(new_ioc),
+        match IOC::new(name, &stage_root, &destination_root) {
+            Ok(new_ioc) => iocs.push(new_ioc),
             _ => ()
         };
     }
-    IOCs
+    iocs
+}
+
+/// Copy files from source to destination recursively.
+pub fn copy_recursively(source: impl AsRef<Path>, destination: impl AsRef<Path>) -> std::io::Result<()> {
+    fs::create_dir_all(&destination)?;
+    for entry in fs::read_dir(source)? {
+        let entry = entry?;
+        let filetype = entry.file_type()?;
+        if filetype.is_dir() {
+            // copy_recursively(entry.path(), destination.as_ref().join(entry.file_name()))?;
+            copy_recursively(entry.path(), destination.as_ref())?;
+        } else {
+            fs::copy(entry.path(), destination.as_ref().join(entry.file_name()))?;
+        }
+    }
+    Ok(())
 }
 
 fn main() {
     let cli = Cli::parse();
 
-    let destination = env::current_dir().unwrap().as_path().join("TEST/ioc");
+    // let destination = env::current_dir().unwrap().as_path().join("TEST/ioc");
+    let stage_root = "stage/";
+    let deploy_root = "deploy/ioc/";
 
-    let mut IOCs: Vec<IOC> = Vec::new();
+
+    let mut ioc_list: Vec<IOC> = Vec::new();
 
     match &cli.command {
         Some(Commands::Install { dryrun, iocs }) => {
             println!("INSTALL");
             println!("\t dryrun: {}", dryrun);
             match iocs {
-                Some(i) => IOCs = collect_iocs(i, &destination),
+                Some(i) => ioc_list = collect_iocs(i, &stage_root, &deploy_root),
                 None => panic!(),
             };
             // call install routine
@@ -81,8 +132,10 @@ fn main() {
         None => println!("NO ACTION --> BYE")
     }
 
-    for ioc in &IOCs {
+    for ioc in &ioc_list {
         println!("{:?}", ioc);
         println!("destination exists: {}", ioc.check_destination());
+        _= ioc.stage();
+        _= ioc.deploy();
     }
 }
