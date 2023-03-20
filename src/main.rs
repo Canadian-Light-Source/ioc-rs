@@ -54,14 +54,14 @@ impl IOC {
         // check source exists
         match source.as_ref().is_dir() {
             true => Ok(IOC {
-                name: name.to_string(),
+                name: name.to_string().replace("/", ""),
                 source: source.as_ref().to_path_buf(),
                 stage: stage,
                 data: data,
                 hash_file: hash_file,
                 destination: destination,
             }),
-            false => Err("no such file or directory")
+            false => Err("Could not find source of IOC. skipping.")
         }
 
     }
@@ -152,19 +152,19 @@ impl IOC {
 
 fn collect_iocs(ioc_names: &Vec<String>, stage_root: impl AsRef<Path>, destination_root: impl AsRef<Path>) -> Vec<IOC>{
     let mut iocs: Vec<IOC> = Vec::new();
-    println!("collecting iocs ... <{}> : {:?}", ioc_names.len(), ioc_names);
-    if ioc_names.len() == 1 {
-        let pwd = env::current_dir().unwrap();
-        let name = pwd.file_stem().unwrap().to_str().unwrap();
-        println!("just the one IOC: {}", &name.to_string());
-        let new_ioc = IOC::new(&name.to_string(), &pwd, &stage_root, &destination_root).unwrap();
-        println!("{:?}",new_ioc);
-        iocs.push(new_ioc);
-        return iocs
-    }
+    println!("collecting iocs ...");
+    // if ioc_names.len() == 1 {
+    //     let pwd = env::current_dir().unwrap();
+    //     let name = pwd.file_stem().unwrap().to_str().unwrap();
+    //     println!("just the one IOC: {}", &name.to_string());
+    //     let new_ioc = IOC::new(&name.to_string(), &pwd, &stage_root, &destination_root).unwrap();
+    //     println!("{:?}",new_ioc);
+    //     iocs.push(new_ioc);
+    //     return iocs
+    // }
     for name in ioc_names.iter() {
         let work_dir = env::current_dir().unwrap().join(&name);
-        match IOC::new(name, &stage_root, &work_dir, &destination_root) {
+        match IOC::new(name, &work_dir, &stage_root, &destination_root) {
             Ok(new_ioc) => iocs.push(new_ioc),
             _ => ()
         };
