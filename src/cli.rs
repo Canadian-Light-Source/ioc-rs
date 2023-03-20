@@ -23,6 +23,9 @@ pub enum Commands {
         /// perform dryrun
         #[arg(short, long, action)]
         dryrun: bool,
+        /// force install
+        #[arg(short, long, action)]
+        force: bool,
         /// list of IOCs to deploy, comma separated
         // #[clap(short, long, default_value = "./", value_parser, num_args = 1.., value_delimiter = ' ')]
         #[clap(default_value = "", value_parser, num_args = 1.., value_delimiter = ' ')]

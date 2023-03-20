@@ -232,32 +232,37 @@ fn main() {
     let mut ioc_list: Vec<IOC> = Vec::new();
 
     match &cli.command {
-        Some(Commands::Install { dryrun, iocs }) => {
+        Some(Commands::Install { dryrun, force, iocs }) => {
             println!("INSTALL");
             println!("\t dryrun: {}", dryrun);
+            println!("\t force:  {}", force);
             match iocs {
                 Some(i) => ioc_list = collect_iocs(i, &stage_root, &deploy_root),
                 None => panic!(),
             };
+            // worker
+            // TODO: move to function
+            for ioc in &ioc_list {
+                println!("-------------------------------------------------");
+                println!("{:?}", ioc);
+                let hash = ioc.check_hash();
+                if let Ok(ioc_hash) = &hash {
+                    println!("IOC {} has valid hash {} ... proceeding", &ioc.name, ioc_hash);
+                }
+                if let Err(err) = &hash {
+                    if !force {
+                        println!("invalid hash: {}\n --> skipping <{}>", err, &ioc.name);
+                        continue;
+                    }
+                }
+                // _= ioc.pre_check();
+                _= ioc.stage();
+                _= ioc.deploy();
+                println!("{}",ioc.render().unwrap());
+            }
             // call deploy routine if not dryrun
             // install_iocs(targets, &destination)
         }
         None => println!("NO ACTION --> BYE")
-    }
-
-    for ioc in &ioc_list {
-        println!("{:?}", ioc);
-        let hash = ioc.check_hash();
-        // if let Ok(description) = &hash {
-        //     println!("{}", description);
-        // }
-        if let Err(err) = &hash {
-            println!("Error: {}\n --> skipping <{}>", err, &ioc.name);
-            continue;
-        }
-        // _= ioc.pre_check();
-        _= ioc.stage();
-        _= ioc.deploy();
-        println!("{}",ioc.render().unwrap());
     }
 }
