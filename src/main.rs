@@ -1,17 +1,21 @@
+use std::path::{Path, PathBuf};
+use std::fs::{File};
+use std::io::prelude::*;
+use std::fs;
+use std::io::{self, BufRead};
 use std::env;
 
-
+// for CLI
 use clap::{Parser};
 
+// for rendering templates
 use tera::{Context, Tera, Error};
 use users::get_current_username;
 use chrono::prelude::*;
 
-use std::path::{Path, PathBuf};
-
-use std::fs::{File};
-use std::io::prelude::*;
-use std::fs;
+// for checksum
+use blake2::{Blake2s256, Digest};
+use file_hashing::get_hash_folder;
 
 // my mods
 pub mod cli;
@@ -28,6 +32,8 @@ struct IOC{
     stage: PathBuf,
     /// data directory for checksum
     data: PathBuf,
+    /// hash file name
+    hash_file: PathBuf,
     /// deploy directory for IOC
     destination: PathBuf,
 }
@@ -37,23 +43,22 @@ impl IOC {
     /// Creates a new IOC structure
     fn new(
         name: &String,
+        source: impl AsRef<Path>,
         stage_root: impl AsRef<Path>,
         destination_root: impl AsRef<Path>)
         -> Result<IOC, &'static str> {
-        let mut working_dir = env::current_dir().unwrap();
-        if name.len()>0 {
-            working_dir = working_dir.as_path().join(&name);
-        }
         let stage = stage_root.as_ref().join(&name);
         let destination = destination_root.as_ref().join(&name);
         let data = destination_root.as_ref().join("data").join(&name);
+        let hash_file = data.join("hash");
         // check source exists
-        match working_dir.is_dir() {
+        match source.as_ref().is_dir() {
             true => Ok(IOC {
                 name: name.to_string(),
-                source: working_dir,
+                source: source.as_ref().to_path_buf(),
                 stage: stage,
                 data: data,
+                hash_file: hash_file,
                 destination: destination,
             }),
             false => Err("no such file or directory")
@@ -106,17 +111,34 @@ impl IOC {
         Ok(())
     }
 
+    fn hash_ioc(&self) -> std::io::Result<()> {
+        let hash = calc_directory_hash(&self.stage);
+        fs::create_dir_all(&self.data)?;
+        write_file(&self.hash_file, hash)?;
+        Ok(())
+    }
+
     fn deploy(&self) -> std::io::Result<()> {
         println!("deploying: {:?}", self.name);
         if self.destination.exists(){
             fs::remove_dir_all(&self.destination)?;  // prep stage
         }
+        self.hash_ioc()?;
         copy_recursively(&self.stage, &self.destination)?;
         Ok(())
     }
 
     /// check whether destination has been tempered with
     fn check_destination(&self) -> bool {
+        let mut hash = String::from("");
+        if let Ok(lines) = read_lines(&self.hash_file) {
+            if let Ok(stored_hash) = lines.last().unwrap(){
+                hash = stored_hash;
+            };
+        }
+        println!("== stored hash =============> {}", hash);
+        println!("== current hash ============> {}", calc_directory_hash(&self.destination));
+
         let dst = self.destination.as_path().join(&self.name);
         // 1. exists
         let exists = dst.is_dir();
@@ -130,8 +152,19 @@ impl IOC {
 
 fn collect_iocs(ioc_names: &Vec<String>, stage_root: impl AsRef<Path>, destination_root: impl AsRef<Path>) -> Vec<IOC>{
     let mut iocs: Vec<IOC> = Vec::new();
+    println!("collecting iocs ... <{}> : {:?}", ioc_names.len(), ioc_names);
+    if ioc_names.len() == 1 {
+        let pwd = env::current_dir().unwrap();
+        let name = pwd.file_stem().unwrap().to_str().unwrap();
+        println!("just the one IOC: {}", &name.to_string());
+        let new_ioc = IOC::new(&name.to_string(), &pwd, &stage_root, &destination_root).unwrap();
+        println!("{:?}",new_ioc);
+        iocs.push(new_ioc);
+        return iocs
+    }
     for name in ioc_names.iter() {
-        match IOC::new(name, &stage_root, &destination_root) {
+        let work_dir = env::current_dir().unwrap().join(&name);
+        match IOC::new(name, &stage_root, &work_dir, &destination_root) {
             Ok(new_ioc) => iocs.push(new_ioc),
             _ => ()
         };
@@ -143,6 +176,12 @@ fn write_file(file_name: impl AsRef<Path>, content: String) -> std::io::Result<(
     let mut file = File::create(file_name)?;
     file.write_all(content.as_bytes())?;
     Ok(())
+}
+
+fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
+where P: AsRef<Path>, {
+    let file = File::open(filename)?;
+    Ok(io::BufReader::new(file).lines())
 }
 
 /// Copy files from source to destination recursively.
@@ -161,13 +200,25 @@ pub fn copy_recursively(source: impl AsRef<Path>, destination: impl AsRef<Path>)
     Ok(())
 }
 
+fn calc_directory_hash(dir: impl AsRef<Path>) -> String {
+    let mut hash = Blake2s256::new();
+    let directory = dir.as_ref().to_str().unwrap();
+    let result = get_hash_folder(
+        &directory,
+        &mut hash,
+        1,
+        |_| {},
+    )
+    .unwrap();
+    result
+}
+
 fn main() {
     let cli = Cli::parse();
 
     // let destination = env::current_dir().unwrap().as_path().join("TEST/ioc");
     let stage_root = "stage/";
     let deploy_root = "deploy/ioc/";
-
 
     let mut ioc_list: Vec<IOC> = Vec::new();
 
@@ -179,7 +230,7 @@ fn main() {
                 Some(i) => ioc_list = collect_iocs(i, &stage_root, &deploy_root),
                 None => panic!(),
             };
-            // call install routine
+            // call deploy routine if not dryrun
             // install_iocs(targets, &destination)
         }
         None => println!("NO ACTION --> BYE")
