@@ -17,9 +17,23 @@ use users::get_current_username;
 use blake2::{Blake2s256, Digest};
 use file_hashing::get_hash_folder;
 
+// logging
+use simple_logger::SimpleLogger;
+use log::{info, warn, error, debug, trace};
+use log::LevelFilter;
+use colored::Colorize;
+
 // my mods
 pub mod cli;
 use cli::{Cli, Commands};
+
+macro_rules! tick {
+    () => {"✔".green()};
+}
+
+macro_rules! cross {
+    () => {"✘".red().bold()};
+}
 
 /// IOC structure
 #[derive(Debug)]
@@ -98,24 +112,27 @@ impl IOC {
         let ioc_startup = "startup.iocsh_".to_owned() + &self.name;
         let new = &self.stage.join(ioc_startup);
         fs::copy(old.as_path(), new.as_path())?;
-        println!(
-            "staging: copied {:?} -> {:?}",
+        trace!(
+            "{} copied {:?} -> {:?}",
+            tick!(),
             &old.as_path(),
             &new.as_path()
         );
         write_file(&old, self.render(template_dir).unwrap())?;
+        trace!("{} template rendered and written to {:?}", tick!(), &old.as_path());
         Ok(())
     }
 
     fn stage(&self, template_dir: &String) -> std::io::Result<()> {
-        println!("staging: {:?}", self.name);
+        trace!("staging: {:?}", self.name);
         if self.stage.exists() {
             fs::remove_dir_all(&self.stage)?; // prep stage directory
+            trace!("{} {:?} removed", tick!(), &self.stage.as_path());
         }
-        println!("staging: {:?} removed", &self.stage.as_path());
         copy_recursively(&self.source, &self.stage)?;
-        println!(
-            "staging: copied {:?} -> {:?}",
+        trace!(
+            "{} copied {:?} -> {:?}",
+            tick!(),
             &self.source.as_path(),
             &self.stage.as_path()
         );
@@ -125,18 +142,25 @@ impl IOC {
 
     fn hash_ioc(&self) -> std::io::Result<()> {
         let hash = calc_directory_hash(&self.stage);
+        trace!("hash: {:?}", hash);
         fs::create_dir_all(&self.data)?;
         write_file(&self.hash_file, hash)?;
         Ok(())
     }
 
     fn deploy(&self) -> std::io::Result<()> {
-        println!("deploying: {:?}", self.name);
+        trace!("deploying: {:?}", self.name);
         if self.destination.exists() {
             fs::remove_dir_all(&self.destination)?; // prep deploy directory
+            trace!("removed {:?}", &self.destination);
         }
         self.hash_ioc()?;
         copy_recursively(&self.stage, &self.destination)?;
+        trace!(
+            "copied {:?} -> {:?}",
+            &self.stage.as_path(),
+            &self.destination.as_path()
+        );
         Ok(())
     }
 
@@ -167,12 +191,13 @@ fn collect_iocs(
     destination_root: impl AsRef<Path>,
 ) -> Vec<IOC> {
     let mut iocs: Vec<IOC> = Vec::new();
-    println!("collecting iocs ...");
+    debug!("collecting iocs ...");
     for name in ioc_names.iter() {
         let work_dir = env::current_dir().unwrap().join(&name);
+        trace!("working dir: {:?}", work_dir);
         match IOC::new(&work_dir, &stage_root, &destination_root) {
             Ok(new_ioc) => iocs.push(new_ioc),
-            _ => (),
+            Err(e) => warn!("{} IOC::new failed with: {}", cross!(), e),
         };
     }
     iocs
@@ -219,12 +244,23 @@ fn calc_directory_hash(dir: impl AsRef<Path>) -> String {
 }
 
 fn main() {
+    info!("IOC toolbox");
     let cli = Cli::parse();
 
     let stage_root = "stage/";
     let deploy_root = "deploy/ioc/";
 
+    let l = cli.log_level.unwrap().to_lowercase();
+    let log_lvl = 
+    if l == "trace"         { LevelFilter::Trace }
+    else if l == "debug"    { LevelFilter::Debug }
+    else if l == "warn"     { LevelFilter::Warn }
+    else if l == "info"     { LevelFilter::Info }
+    else                    { LevelFilter::Error }; // always report errors
+    SimpleLogger::new().with_level(log_lvl).init().unwrap();
+
     let template_dir = &cli.template_dir.unwrap_or("templates/*.tera".to_string());
+    trace!("template_dir: {:?}", template_dir);
 
     match &cli.command {
         Some(Commands::Install {
@@ -232,9 +268,9 @@ fn main() {
             force,
             iocs,
         }) => {
-            println!("INSTALL");
-            println!("\t dryrun: {}", dryrun);
-            println!("\t force:  {}", force);
+            debug!("command: install");
+            info!("dryrun: {}", dryrun);
+            info!("force:  {}", force);
             let ioc_list = match iocs {
                 Some(i) => collect_iocs(i, &stage_root, &deploy_root),
                 None => panic!(),
@@ -242,19 +278,19 @@ fn main() {
             // worker
             // TODO: move to function
             for ioc in &ioc_list {
-                println!("-------------------------------------------------");
-                println!("{:?}", ioc);
+                trace!("-------------------------------------------------");
+                trace!("{:?}", ioc);
                 // temper check
                 let hash = ioc.check_hash();
                 if let Ok(ioc_hash) = &hash {
-                    println!(
-                        "IOC {} has valid hash |{}| ... proceeding",
-                        &ioc.name, ioc_hash
+                    info!(
+                        "{} IOC {} has valid hash |{}| ... proceeding",
+                        tick!(), &ioc.name, ioc_hash
                     );
                 }
                 if let Err(err) = &hash {
                     if !force {
-                        println!("invalid hash: {}\n --> skipping <{}>", err, &ioc.name);
+                        error!("{} {} --> check destination <{:?}> and use `{} {}` to deploy regardless", cross!(), err, &ioc.destination.as_path(), "ioc install --force".yellow(), &ioc.name.yellow());
                         continue;
                     }
                 }
