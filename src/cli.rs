@@ -15,7 +15,7 @@ pub struct Cli {
     pub template_dir: Option<String>,
 
     /// logger
-    #[arg(short, long,default_value = "info")]
+    #[arg(short, long, default_value = "info")]
     pub log_level: Option<String>,
 
     /// The name of the command

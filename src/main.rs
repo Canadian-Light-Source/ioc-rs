@@ -18,21 +18,25 @@ use blake2::{Blake2s256, Digest};
 use file_hashing::get_hash_folder;
 
 // logging
-use simple_logger::SimpleLogger;
-use log::{info, warn, error, debug, trace};
-use log::LevelFilter;
 use colored::Colorize;
+use log::LevelFilter;
+use log::{debug, error, info, trace, warn};
+use simple_logger::SimpleLogger;
 
 // my mods
 pub mod cli;
 use cli::{Cli, Commands};
 
 macro_rules! tick {
-    () => {"✔".green()};
+    () => {
+        "✔".green()
+    };
 }
 
 macro_rules! cross {
-    () => {"✘".red().bold()};
+    () => {
+        "✘".red().bold()
+    };
 }
 
 /// IOC structure
@@ -63,7 +67,13 @@ impl IOC {
         stage_root: impl AsRef<Path>,
         destination_root: impl AsRef<Path>,
     ) -> Result<IOC, &'static str> {
-        let name = source.as_ref().file_stem().unwrap().to_str().unwrap().to_string();
+        let name = source
+            .as_ref()
+            .file_stem()
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .to_string();
         let stage = stage_root.as_ref().join(&name);
         let destination = destination_root.as_ref().join(&name);
         let data = destination_root.as_ref().join("data").join(&name);
@@ -119,7 +129,11 @@ impl IOC {
             &new.as_path()
         );
         write_file(&old, self.render(template_dir).unwrap())?;
-        trace!("{} template rendered and written to {:?}", tick!(), &old.as_path());
+        trace!(
+            "{} template rendered and written to {:?}",
+            tick!(),
+            &old.as_path()
+        );
         Ok(())
     }
 
@@ -251,12 +265,17 @@ fn main() {
     let deploy_root = "deploy/ioc/";
 
     let l = cli.log_level.unwrap().to_lowercase();
-    let log_lvl = 
-    if l == "trace"         { LevelFilter::Trace }
-    else if l == "debug"    { LevelFilter::Debug }
-    else if l == "warn"     { LevelFilter::Warn }
-    else if l == "info"     { LevelFilter::Info }
-    else                    { LevelFilter::Error }; // always report errors
+    let log_lvl = if l == "trace" {
+        LevelFilter::Trace
+    } else if l == "debug" {
+        LevelFilter::Debug
+    } else if l == "warn" {
+        LevelFilter::Warn
+    } else if l == "info" {
+        LevelFilter::Info
+    } else {
+        LevelFilter::Error
+    }; // always report errors
     SimpleLogger::new().with_level(log_lvl).init().unwrap();
 
     let template_dir = &cli.template_dir.unwrap_or("templates/*.tera".to_string());
@@ -285,7 +304,9 @@ fn main() {
                 if let Ok(ioc_hash) = &hash {
                     info!(
                         "{} IOC {} has valid hash |{}| ... proceeding",
-                        tick!(), &ioc.name, ioc_hash
+                        tick!(),
+                        &ioc.name,
+                        ioc_hash
                     );
                 }
                 if let Err(err) = &hash {
