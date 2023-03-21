@@ -39,6 +39,12 @@ macro_rules! cross {
     };
 }
 
+macro_rules! exclaim {
+    () => {
+        "!".yellow().bold()
+    };
+}
+
 /// IOC structure
 #[derive(Debug)]
 struct IOC {
@@ -325,19 +331,21 @@ fn main() {
                 info!("----- {} -----", ioc.name.blue().bold());
                 trace!("{:?}", ioc);
                 // temper check
-                let hash = ioc.check_hash();
-                if let Ok(ioc_hash) = &hash {
-                    info!(
-                        "{} valid hash for {} |{}|",
-                        tick!(),
-                        &ioc.name.blue(),
-                        ioc_hash
-                    );
-                }
-                if let Err(err) = &hash {
-                    if !force {
-                        error!("{} {} --> check destination <{:?}> and use `{} {}` to deploy regardless", cross!(), err, &ioc.destination.as_path(), "ioc install --force".yellow(), &ioc.name.yellow());
-                        continue;
+                match ioc.check_hash() {
+                    Ok(hash) => {
+                        info!("{} valid hash for {} |{}|", tick!(), &ioc.name.blue(), hash);
+                    }
+                    Err(e) => {
+                        if !force {
+                            error!("{} {} --> check destination <{:?}> and use `{} {}` to deploy regardless", cross!(), e, &ioc.destination.as_path(), "ioc install --force".yellow(), &ioc.name.yellow());
+                            continue;
+                        } else {
+                            warn!(
+                                "{} failed hash check overwritten by {}",
+                                exclaim!(),
+                                "--force".yellow()
+                            );
+                        }
                     }
                 }
                 // staging
@@ -351,7 +359,7 @@ fn main() {
                         e
                     ),
                 }
-                // deploy
+                // deployment
                 if !dryrun {
                     trace!("deploying {}", ioc.name.blue().bold());
                     match ioc.deploy() {
