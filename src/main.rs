@@ -88,7 +88,7 @@ impl IOC {
                 hash_file: hash_file,
                 destination: destination,
             }),
-            false => Err("Could not find source of IOC. skipping."),
+            false => Err("Could not find source of IOC."),
         }
     }
 
@@ -101,10 +101,11 @@ impl IOC {
         let tera = match Tera::new(&template_dir) {
             Ok(t) => t,
             Err(e) => {
-                println!("Parsing error(s): {}", e);
+                error!("Parsing error(s): {}", e);
                 ::std::process::exit(1);
             }
         };
+        trace!("{} tera parser created", tick!());
 
         let local: DateTime<Local> = Local::now();
         let formatted = format!("{}", local.format("%Y-%m-%d %H:%M:%S.%f"));
@@ -113,7 +114,13 @@ impl IOC {
         context.insert("user", &user_name.as_os_str().to_str());
         context.insert("destination", &self.destination);
         context.insert("date", &formatted);
+        trace!(
+            "{} tera context created: {:?}",
+            tick!(),
+            &context.clone().into_json()
+        );
 
+        trace!("{} tera rendering ...", tick!());
         tera.render("startup.tera", &context)
     }
 
@@ -138,7 +145,7 @@ impl IOC {
     }
 
     fn stage(&self, template_dir: &String) -> std::io::Result<()> {
-        trace!("staging: {:?}", self.name);
+        trace!("staging {}", self.name.blue());
         if self.stage.exists() {
             fs::remove_dir_all(&self.stage)?; // prep stage directory
             trace!("{} {:?} removed", tick!(), &self.stage.as_path());
@@ -151,6 +158,7 @@ impl IOC {
             &self.stage.as_path()
         );
         self.wrap_startup(template_dir)?;
+        debug!("{} staging of {:?} complete.", tick!(), self.name);
         Ok(())
     }
 
@@ -159,11 +167,16 @@ impl IOC {
         trace!("hash: {:?}", hash);
         fs::create_dir_all(&self.data)?;
         write_file(&self.hash_file, hash)?;
+        debug!(
+            "{} hash_file {:?} written.",
+            tick!(),
+            &self.hash_file.as_path()
+        );
         Ok(())
     }
 
     fn deploy(&self) -> std::io::Result<()> {
-        trace!("deploying: {:?}", self.name);
+        trace!("deploying {}", self.name.blue());
         if self.destination.exists() {
             fs::remove_dir_all(&self.destination)?; // prep deploy directory
             trace!("removed {:?}", &self.destination);
@@ -173,6 +186,12 @@ impl IOC {
         trace!(
             "copied {:?} -> {:?}",
             &self.stage.as_path(),
+            &self.destination.as_path()
+        );
+        debug!(
+            "{} deployment of {:?} to {:?} complete.",
+            tick!(),
+            self.name,
             &self.destination.as_path()
         );
         Ok(())
@@ -211,7 +230,12 @@ fn collect_iocs(
         trace!("working dir: {:?}", work_dir);
         match IOC::new(&work_dir, &stage_root, &destination_root) {
             Ok(new_ioc) => iocs.push(new_ioc),
-            Err(e) => warn!("{} IOC::new failed with: {}", cross!(), e),
+            Err(e) => error!(
+                "{} IOC::new failed for <{}> with: {}",
+                cross!(),
+                name.red().bold(),
+                e
+            ),
         };
     }
     iocs
@@ -287,25 +311,26 @@ fn main() {
             force,
             iocs,
         }) => {
-            debug!("command: install");
-            info!("dryrun: {}", dryrun);
-            info!("force:  {}", force);
+            debug!("command: <{}>", "install".yellow());
+            debug!("dryrun: {}", dryrun);
+            debug!("force:  {}", force);
             let ioc_list = match iocs {
                 Some(i) => collect_iocs(i, &stage_root, &deploy_root),
                 None => panic!(),
             };
+            trace!("{} ioc list created", tick!());
             // worker
             // TODO: move to function
             for ioc in &ioc_list {
-                trace!("-------------------------------------------------");
+                info!("----- {} -----", ioc.name.blue().bold());
                 trace!("{:?}", ioc);
                 // temper check
                 let hash = ioc.check_hash();
                 if let Ok(ioc_hash) = &hash {
                     info!(
-                        "{} IOC {} has valid hash |{}| ... proceeding",
+                        "{} valid hash for {} |{}|",
                         tick!(),
-                        &ioc.name,
+                        &ioc.name.blue(),
                         ioc_hash
                     );
                 }
@@ -316,11 +341,32 @@ fn main() {
                     }
                 }
                 // staging
-                _ = ioc.stage(template_dir);
+                trace!("staging {}", ioc.name.blue().bold());
+                match ioc.stage(template_dir) {
+                    Ok(_) => info!("{} staged {}", tick!(), ioc.name.blue()),
+                    Err(e) => error!(
+                        "{} staging of {} failed with: {}",
+                        cross!(),
+                        ioc.name.red().bold(),
+                        e
+                    ),
+                }
                 // deploy
                 if !dryrun {
-                    _ = ioc.deploy();
+                    trace!("deploying {}", ioc.name.blue().bold());
+                    match ioc.deploy() {
+                        Ok(_) => info!("{} deployed {}", tick!(), ioc.name.blue()),
+                        Err(e) => error!(
+                            "{} deployment of {} failed with: {}",
+                            cross!(),
+                            ioc.name.red().bold(),
+                            e
+                        ),
+                    }
+                } else {
+                    info!("{} was chosen, no deployment", "--dryrun".yellow());
                 }
+                trace!("------------");
             }
         }
         None => println!("NO ACTION --> BYE"),
