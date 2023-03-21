@@ -30,6 +30,9 @@ pub enum Commands {
         /// perform dryrun
         #[arg(short, long, action)]
         dryrun: bool,
+        /// perform dryrun
+        #[arg(long, action)]
+        retain: bool,
         /// force install
         #[arg(short, long, action)]
         force: bool,

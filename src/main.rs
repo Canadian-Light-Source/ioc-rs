@@ -185,12 +185,13 @@ impl IOC {
         trace!("deploying {}", self.name.blue());
         if self.destination.exists() {
             fs::remove_dir_all(&self.destination)?; // prep deploy directory
-            trace!("removed {:?}", &self.destination);
+            trace!("{} removed {:?}", tick!(), &self.destination);
         }
         self.hash_ioc()?;
         copy_recursively(&self.stage, &self.destination)?;
         trace!(
-            "copied {:?} -> {:?}",
+            "{} copied {:?} -> {:?}",
+            tick!(),
             &self.stage.as_path(),
             &self.destination.as_path()
         );
@@ -287,6 +288,13 @@ fn calc_directory_hash(dir: impl AsRef<Path>) -> String {
     result
 }
 
+fn ioc_cleanup(ioc: &IOC) -> std::io::Result<()> {
+    trace!("cleaning up staging directory for {}", &ioc.name);
+    fs::remove_dir_all(&ioc.stage)?;
+    info!("{} cleaning up: removed {:?}", tick!(), &ioc.stage);
+    Ok(())
+}
+
 fn main() {
     info!("IOC toolbox");
     let cli = Cli::parse();
@@ -314,11 +322,13 @@ fn main() {
     match &cli.command {
         Some(Commands::Install {
             dryrun,
+            retain,
             force,
             iocs,
         }) => {
             debug!("command: <{}>", "install".yellow());
             debug!("dryrun: {}", dryrun);
+            debug!("retain: {}", retain);
             debug!("force:  {}", force);
             let ioc_list = match iocs {
                 Some(i) => collect_iocs(i, &stage_root, &deploy_root),
@@ -373,6 +383,22 @@ fn main() {
                     }
                 } else {
                     info!("{} was chosen, no deployment", "--dryrun".yellow());
+                    if !retain {
+                        match ioc_cleanup(ioc) {
+                            Ok(_) => {}
+                            Err(e) => error!(
+                                "{} clean up failed for {} with error: {}",
+                                cross!(),
+                                &ioc.name,
+                                e
+                            ),
+                        };
+                    } else {
+                        info!(
+                            "{} stage directory retained. Make sure to clean up after yourself!",
+                            exclaim!()
+                        );
+                    }
                 }
                 trace!("------------");
             }
