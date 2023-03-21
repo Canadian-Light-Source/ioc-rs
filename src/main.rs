@@ -1,17 +1,17 @@
-use std::path::{Path, PathBuf};
-use std::fs::{File};
-use std::io::prelude::*;
-use std::fs;
-use std::io::{self, BufRead};
 use std::env;
+use std::fs;
+use std::fs::File;
+use std::io::prelude::*;
+use std::io::{self, BufRead};
+use std::path::{Path, PathBuf};
 
 // for CLI
-use clap::{Parser};
+use clap::Parser;
 
 // for rendering templates
-use tera::{Context, Tera, Error};
-use users::get_current_username;
 use chrono::prelude::*;
+use tera::{Context, Error, Tera};
+use users::get_current_username;
 
 // for checksum
 use blake2::{Blake2s256, Digest};
@@ -23,7 +23,7 @@ use cli::{Cli, Commands};
 
 /// IOC structure
 #[derive(Debug)]
-struct IOC{
+struct IOC {
     /// name of the IOC
     name: String,
     /// source of the IOC definition
@@ -45,8 +45,8 @@ impl IOC {
         name: &String,
         source: impl AsRef<Path>,
         stage_root: impl AsRef<Path>,
-        destination_root: impl AsRef<Path>)
-        -> Result<IOC, &'static str> {
+        destination_root: impl AsRef<Path>,
+    ) -> Result<IOC, &'static str> {
         let stage = stage_root.as_ref().join(&name);
         let destination = destination_root.as_ref().join(&name);
         let data = destination_root.as_ref().join("data").join(&name);
@@ -61,14 +61,12 @@ impl IOC {
                 hash_file: hash_file,
                 destination: destination,
             }),
-            false => Err("Could not find source of IOC. skipping.")
+            false => Err("Could not find source of IOC. skipping."),
         }
-
     }
 
     fn render(&self, template_dir: &String) -> Result<String, Error> {
-
-        let user_name = match get_current_username(){
+        let user_name = match get_current_username() {
             Some(uname) => uname,
             None => "unkown".into(),
         };
@@ -97,19 +95,27 @@ impl IOC {
         let ioc_startup = "startup.iocsh_".to_owned() + &self.name;
         let new = &self.stage.join(ioc_startup);
         fs::copy(old.as_path(), new.as_path())?;
-        println!("staging: copied {:?} -> {:?}", &old.as_path(), &new.as_path());
+        println!(
+            "staging: copied {:?} -> {:?}",
+            &old.as_path(),
+            &new.as_path()
+        );
         write_file(&old, self.render(template_dir).unwrap())?;
         Ok(())
     }
 
     fn stage(&self, template_dir: &String) -> std::io::Result<()> {
         println!("staging: {:?}", self.name);
-        if self.stage.exists(){
-            fs::remove_dir_all(&self.stage)?;  // prep stage directory
+        if self.stage.exists() {
+            fs::remove_dir_all(&self.stage)?; // prep stage directory
         }
         println!("staging: {:?} removed", &self.stage.as_path());
         copy_recursively(&self.source, &self.stage)?;
-        println!("staging: copied {:?} -> {:?}", &self.source.as_path(), &self.stage.as_path());
+        println!(
+            "staging: copied {:?} -> {:?}",
+            &self.source.as_path(),
+            &self.stage.as_path()
+        );
         self.wrap_startup(template_dir)?;
         Ok(())
     }
@@ -123,8 +129,8 @@ impl IOC {
 
     fn deploy(&self) -> std::io::Result<()> {
         println!("deploying: {:?}", self.name);
-        if self.destination.exists(){
-            fs::remove_dir_all(&self.destination)?;  // prep deploy directory
+        if self.destination.exists() {
+            fs::remove_dir_all(&self.destination)?; // prep deploy directory
         }
         self.hash_ioc()?;
         copy_recursively(&self.stage, &self.destination)?;
@@ -139,7 +145,7 @@ impl IOC {
         }
         let mut hash = String::from("");
         if let Ok(lines) = read_lines(&self.hash_file) {
-            if let Ok(stored_hash) = lines.last().unwrap(){
+            if let Ok(stored_hash) = lines.last().unwrap() {
                 hash = stored_hash;
             };
         }
@@ -149,12 +155,14 @@ impl IOC {
             true => hash,
         };
         Ok(valid_hash)
-
     }
 }
 
-
-fn collect_iocs(ioc_names: &Vec<String>, stage_root: impl AsRef<Path>, destination_root: impl AsRef<Path>) -> Vec<IOC>{
+fn collect_iocs(
+    ioc_names: &Vec<String>,
+    stage_root: impl AsRef<Path>,
+    destination_root: impl AsRef<Path>,
+) -> Vec<IOC> {
     let mut iocs: Vec<IOC> = Vec::new();
     println!("collecting iocs ...");
     // if ioc_names.len() == 1 {
@@ -170,7 +178,7 @@ fn collect_iocs(ioc_names: &Vec<String>, stage_root: impl AsRef<Path>, destinati
         let work_dir = env::current_dir().unwrap().join(&name);
         match IOC::new(name, &work_dir, &stage_root, &destination_root) {
             Ok(new_ioc) => iocs.push(new_ioc),
-            _ => ()
+            _ => (),
         };
     }
     iocs
@@ -183,20 +191,25 @@ fn write_file(file_name: impl AsRef<Path>, content: String) -> std::io::Result<(
 }
 
 fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
-where P: AsRef<Path>, {
+where
+    P: AsRef<Path>,
+{
     let file = File::open(filename)?;
     Ok(io::BufReader::new(file).lines())
 }
 
 /// Copy files from source to destination recursively.
-pub fn copy_recursively(source: impl AsRef<Path>, destination: impl AsRef<Path>) -> std::io::Result<()> {
+pub fn copy_recursively(
+    source: impl AsRef<Path>,
+    destination: impl AsRef<Path>,
+) -> std::io::Result<()> {
     fs::create_dir_all(&destination)?;
     for entry in fs::read_dir(source)? {
         let entry = entry?;
         let filetype = entry.file_type()?;
         if filetype.is_dir() {
             // copy_recursively(entry.path(), destination.as_ref().join(entry.file_name()))?;
-            copy_recursively(entry.path(), destination.as_ref())?;  // flatten the structure
+            copy_recursively(entry.path(), destination.as_ref())?; // flatten the structure
         } else {
             fs::copy(entry.path(), destination.as_ref().join(entry.file_name()))?;
         }
@@ -207,13 +220,7 @@ pub fn copy_recursively(source: impl AsRef<Path>, destination: impl AsRef<Path>)
 fn calc_directory_hash(dir: impl AsRef<Path>) -> String {
     let mut hash = Blake2s256::new();
     let directory = dir.as_ref().to_str().unwrap();
-    let result = get_hash_folder(
-        &directory,
-        &mut hash,
-        1,
-        |_| {},
-    )
-    .unwrap();
+    let result = get_hash_folder(&directory, &mut hash, 1, |_| {}).unwrap();
     result
 }
 
@@ -225,9 +232,12 @@ fn main() {
 
     let template_dir = &cli.template_dir.unwrap_or("templates/*.tera".to_string());
 
-    
     match &cli.command {
-        Some(Commands::Install { dryrun, force, iocs }) => {
+        Some(Commands::Install {
+            dryrun,
+            force,
+            iocs,
+        }) => {
             println!("INSTALL");
             println!("\t dryrun: {}", dryrun);
             println!("\t force:  {}", force);
@@ -243,7 +253,10 @@ fn main() {
                 // temper check
                 let hash = ioc.check_hash();
                 if let Ok(ioc_hash) = &hash {
-                    println!("IOC {} has valid hash |{}| ... proceeding", &ioc.name, ioc_hash);
+                    println!(
+                        "IOC {} has valid hash |{}| ... proceeding",
+                        &ioc.name, ioc_hash
+                    );
                 }
                 if let Err(err) = &hash {
                     if !force {
@@ -252,13 +265,13 @@ fn main() {
                     }
                 }
                 // staging
-                _= ioc.stage(template_dir);
+                _ = ioc.stage(template_dir);
                 // deploy
-                if !dryrun{
-                    _= ioc.deploy();
+                if !dryrun {
+                    _ = ioc.deploy();
                 }
             }
         }
-        None => println!("NO ACTION --> BYE")
+        None => println!("NO ACTION --> BYE"),
     }
 }

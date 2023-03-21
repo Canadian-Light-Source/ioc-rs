@@ -10,7 +10,6 @@ pub struct Cli {
     // /// Path to the deployment destination
     // #[arg(short, long)]
     // path: Option<String>,
-
     /// Path to the tempalte directory
     #[arg(short, long)]
     pub template_dir: Option<String>,
