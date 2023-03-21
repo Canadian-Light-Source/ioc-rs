@@ -41,12 +41,15 @@ struct IOC {
 /// IOC structure implementation
 impl IOC {
     /// Creates a new IOC structure
+    /// shold fail if source does not contain at least a 'startup.iocsh'
+    // TODO: implement pre-check
     fn new(
-        name: &String,
+        // name: &String,
         source: impl AsRef<Path>,
         stage_root: impl AsRef<Path>,
         destination_root: impl AsRef<Path>,
     ) -> Result<IOC, &'static str> {
+        let name = source.as_ref().file_stem().unwrap().to_str().unwrap().to_string();
         let stage = stage_root.as_ref().join(&name);
         let destination = destination_root.as_ref().join(&name);
         let data = destination_root.as_ref().join("data").join(&name);
@@ -54,7 +57,7 @@ impl IOC {
         // check source exists
         match source.as_ref().is_dir() {
             true => Ok(IOC {
-                name: name.to_string().replace("/", ""),
+                name: name,
                 source: source.as_ref().to_path_buf(),
                 stage: stage,
                 data: data,
@@ -165,18 +168,9 @@ fn collect_iocs(
 ) -> Vec<IOC> {
     let mut iocs: Vec<IOC> = Vec::new();
     println!("collecting iocs ...");
-    // if ioc_names.len() == 1 {
-    //     let pwd = env::current_dir().unwrap();
-    //     let name = pwd.file_stem().unwrap().to_str().unwrap();
-    //     println!("just the one IOC: {}", &name.to_string());
-    //     let new_ioc = IOC::new(&name.to_string(), &pwd, &stage_root, &destination_root).unwrap();
-    //     println!("{:?}",new_ioc);
-    //     iocs.push(new_ioc);
-    //     return iocs
-    // }
     for name in ioc_names.iter() {
         let work_dir = env::current_dir().unwrap().join(&name);
-        match IOC::new(name, &work_dir, &stage_root, &destination_root) {
+        match IOC::new(&work_dir, &stage_root, &destination_root) {
             Ok(new_ioc) => iocs.push(new_ioc),
             _ => (),
         };
