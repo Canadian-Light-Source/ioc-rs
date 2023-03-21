@@ -30,7 +30,7 @@ See `ioc install --help` for more information.
 
 ### TODO
 
-- default to PWD if name not specified
+- default to PWD if name not specified [implemented]
 - test
 - refactor to move functions to separate mods
 - ...
