@@ -27,23 +27,8 @@ use simple_logger::SimpleLogger;
 pub mod cli;
 use cli::{Cli, Commands};
 
-macro_rules! tick {
-    () => {
-        "✔".green()
-    };
-}
-
-macro_rules! cross {
-    () => {
-        "✘".red().bold()
-    };
-}
-
-macro_rules! exclaim {
-    () => {
-        "!".yellow().bold()
-    };
-}
+pub mod log_macros;
+use crate::log_macros::{cross, exclaim, tick};
 
 /// IOC structure
 #[derive(Debug)]
