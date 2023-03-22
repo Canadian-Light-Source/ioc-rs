@@ -227,6 +227,15 @@ fn copy_recursively(
     fs::create_dir_all(&destination)?;
     for entry in fs::read_dir(source)? {
         let entry = entry?;
+        if entry
+            .file_name()
+            .as_os_str()
+            .to_str()
+            .unwrap()
+            .starts_with(".")
+        {
+            continue;
+        }
         let filetype = entry.file_type()?;
         if filetype.is_dir() {
             // copy_recursively(entry.path(), destination.as_ref().join(entry.file_name()))?;
