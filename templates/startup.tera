@@ -3,6 +3,8 @@
 epicsEnvSet IOC {{ IOC }}
 epicsEnvSet ENGINEER {{ user }}
 
+require clsStartup $(clsStartup_VERSION=ifexists)
+
 < startup.iocsh_{{ IOC }}
 
 {% include "footer.tera" %}

@@ -1,5 +1,5 @@
 # ------------------
 # FOOTER
 # ------------------
-cd {{ destination }}
+# cd {{ destination }}
 # Ru has to decide in the end
