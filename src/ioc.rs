@@ -126,7 +126,7 @@ impl IOC {
     pub fn stage(&self, template_dir: &String) -> std::io::Result<()> {
         trace!("staging {}", self.name.blue());
         if self.stage.exists() {
-            fs::remove_dir_all(&self.stage)?; // prep stage directory
+            remove_dir_contents(&self.stage)?; // prep stage directory
             trace!("{} {:?} removed", tick!(), &self.stage.as_path());
         }
         copy_recursively(&self.source, &self.stage)?;
@@ -157,7 +157,7 @@ impl IOC {
     pub fn deploy(&self) -> std::io::Result<()> {
         trace!("deploying {}", self.name.blue());
         if self.destination.exists() {
-            fs::remove_dir_all(&self.destination)?; // prep deploy directory
+            remove_dir_contents(&self.destination)?; // prep deploy directory
             trace!("{} removed {:?}", tick!(), &self.destination);
         }
         self.hash_ioc()?;
@@ -239,6 +239,21 @@ fn copy_recursively(
             }
         } else {
             fs::copy(entry.path(), destination.as_ref().join(entry.file_name()))?;
+        }
+    }
+    Ok(())
+}
+
+fn remove_dir_contents<P: AsRef<Path>>(path: P) -> io::Result<()> {
+    for entry in fs::read_dir(path)? {
+        let entry = entry?;
+        let path = entry.path();
+
+        if entry.file_type()?.is_dir() {
+            remove_dir_contents(&path)?;
+            fs::remove_dir(path)?;
+        } else {
+            fs::remove_file(path)?;
         }
     }
     Ok(())
