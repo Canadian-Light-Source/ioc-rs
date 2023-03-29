@@ -34,3 +34,33 @@ See `ioc install --help` for more information.
 - test
 - refactor to move functions to separate mods
 - ...
+
+## flow chart
+```mermaid
+flowchart TD
+    ioc --> install
+    ioc --> remove
+    install --> cli(parse cli argument)
+    cli --> list(build list of IOCs)
+    list --> |for each| check_hash(check hash)
+    check_hash --> find_file
+    hash_OK --> stage
+    hash_fail --> |continue with next| check_hash
+    hash_fail --> |--force| stage
+    stage --> stage_ioc
+    stage_ioc --> deploy
+    
+
+subgraph "hash_checker"
+    find_file --> no_hash
+    find_file --> buffer_hash
+    buffer_hash --> compare_hash
+    compare_hash --> hash_OK
+    compare_hash --> hash_fail
+    no_hash(hash file does not exist) --> hash_OK
+end
+
+subgraph "stage_ioc"
+    clean_up_stage --> copy_recursively --> render_template --> wrap_startup
+end
+```
