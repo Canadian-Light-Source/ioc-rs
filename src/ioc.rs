@@ -17,6 +17,7 @@ use colored::Colorize;
 use log::{debug, error, trace};
 
 use crate::log_macros::tick;
+use crate::Metadata;
 
 /// IOC structure
 #[derive(Debug)]
@@ -86,9 +87,12 @@ impl IOC {
         };
         trace!("{} tera parser created", tick!());
 
+        let metadata = Metadata::new();
         let local: DateTime<Local> = Local::now();
         let formatted = format!("{}", local.format("%Y-%m-%d %H:%M:%S.%f"));
         let mut context = Context::new();
+        context.insert("tool", metadata.get_name());
+        context.insert("version", metadata.get_version());
         context.insert("IOC", &self.name);
         context.insert("user", &user_name.as_os_str().to_str());
         context.insert("destination", &self.destination);

@@ -1,6 +1,7 @@
 use std::env;
 use std::fs;
 use std::path::Path;
+// use std::process::exit;
 
 // for CLI
 use clap::Parser;
@@ -20,6 +21,9 @@ use cli::{Cli, Commands};
 
 mod settings;
 use settings::Settings;
+
+mod metadata;
+use metadata::Metadata;
 
 pub mod log_macros;
 use crate::log_macros::{cross, exclaim, tick};
@@ -79,6 +83,15 @@ fn main() {
 
     // initialize logging
     SimpleLogger::new().with_level(log_lvl).init().unwrap();
+
+    let metadata = Metadata::new();
+    trace!("metadata --------------------------------");
+    trace!("  name   : {}", metadata.get_name());
+    trace!("  desc   : {}", metadata.get_description());
+    trace!("  version: {}", metadata.get_version());
+    trace!("  authors: {}", metadata.get_authors());
+    trace!("  repo:    {}", metadata.get_repository());
+    trace!("-----------------------------------------");
 
     let stage_root = settings
         .get::<String>("filesystem.stage")
