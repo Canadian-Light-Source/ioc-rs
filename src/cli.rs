@@ -4,7 +4,7 @@ use clap::{Parser, Subcommand};
 #[derive(Parser)]
 #[command(name = "ioc")]
 #[command(author = "Niko Kivel <niko.kivel@lightsource.ca>")]
-#[command(version = "0.1.0")]
+#[command(version = "0.3.1")]
 #[command(about = "install ioc definitions", long_about = None)]
 pub struct Cli {
     // /// Path to the deployment destination
@@ -17,6 +17,10 @@ pub struct Cli {
     /// logger
     #[arg(short, long, default_value = "info")]
     pub log_level: Option<String>,
+
+    /// config file
+    #[arg(short, long)]
+    pub config_file: Option<String>,
 
     /// The name of the command
     #[command(subcommand)]
