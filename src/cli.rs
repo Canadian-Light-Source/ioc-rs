@@ -2,9 +2,6 @@ use clap::{Parser, Subcommand};
 
 // CLI =================================================
 #[derive(Parser)]
-// #[command(name = "ioc")]
-// #[command(author = "Niko Kivel <niko.kivel@lightsource.ca>")]
-// #[command(version = "0.4.0")]
 #[command(about = "Tool for the deployment of ioc definitions", long_about = None)]
 pub struct Cli {
     /// Path to the tempalte directory
