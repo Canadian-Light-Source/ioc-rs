@@ -60,24 +60,24 @@ impl IOC {
         // check source exists
         match source.as_ref().is_dir() {
             true => Ok(IOC {
-                name: name,
+                name,
                 source: source.as_ref().to_path_buf(),
-                stage: stage,
-                data: data,
-                hash_file: hash_file,
-                destination: destination,
+                stage,
+                data,
+                hash_file,
+                destination,
             }),
             false => Err("Could not find source of IOC."),
         }
     }
 
-    fn render(&self, template_dir: &String) -> Result<String, Error> {
+    fn render(&self, template_dir: &str) -> Result<String, Error> {
         let user_name = match get_current_username() {
             Some(uname) => uname,
             None => "unkown".into(),
         };
 
-        let tera = match Tera::new(&template_dir) {
+        let tera = match Tera::new(template_dir) {
             Ok(t) => t,
             Err(e) => {
                 error!("Parsing error(s): {}", e);
@@ -103,7 +103,7 @@ impl IOC {
         tera.render("startup.tera", &context)
     }
 
-    fn wrap_startup(&self, template_dir: &String) -> std::io::Result<()> {
+    fn wrap_startup(&self, template_dir: &str) -> std::io::Result<()> {
         let old = &self.stage.join("startup.iocsh");
         let ioc_startup = "startup.iocsh_".to_owned() + &self.name;
         let new = &self.stage.join(ioc_startup);
@@ -114,7 +114,7 @@ impl IOC {
             &old.as_path(),
             &new.as_path()
         );
-        write_file(&old, self.render(template_dir).unwrap())?;
+        write_file(old, self.render(template_dir).unwrap())?;
         trace!(
             "{} template rendered and written to {:?}",
             tick!(),
@@ -123,7 +123,7 @@ impl IOC {
         Ok(())
     }
 
-    pub fn stage(&self, template_dir: &String) -> std::io::Result<()> {
+    pub fn stage(&self, template_dir: &str) -> std::io::Result<()> {
         trace!("staging {}", self.name.blue());
         if self.stage.exists() {
             remove_dir_contents(&self.stage)?; // prep stage directory
@@ -215,8 +215,7 @@ where
 fn calc_directory_hash(dir: impl AsRef<Path>) -> String {
     let mut hash = Blake2s256::new();
     let directory = dir.as_ref().to_str().unwrap();
-    let result = get_hash_folder(&directory, &mut hash, 1, |_| {}).unwrap();
-    result
+    get_hash_folder(directory, &mut hash, 1, |_| {}).unwrap()
 }
 
 /// Copy files from source to destination recursively.
@@ -227,7 +226,7 @@ fn copy_recursively(
     fs::create_dir_all(&destination)?;
     for entry in fs::read_dir(source)? {
         let entry = entry?;
-        if entry.file_name().into_string().unwrap().starts_with(".") {
+        if entry.file_name().into_string().unwrap().starts_with('.') {
             continue;
         }
         let filetype = entry.file_type()?;
