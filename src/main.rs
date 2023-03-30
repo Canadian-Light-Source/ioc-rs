@@ -56,18 +56,8 @@ fn ioc_cleanup(ioc: &IOC) -> std::io::Result<()> {
 
 fn main() {
     let cli = Cli::parse();
-    let settings = Settings::new(&cli.config_file.unwrap()).unwrap();
+    let settings = Settings::new(&cli.config_file.unwrap_or("".to_string())).unwrap();
 
-    let dbg = settings.get_bool("debug").unwrap_or(false);
-    println!("stage:  {:?}", settings.get::<String>("filesystem.stage"));
-    println!("deploy: {:?}", settings.get::<String>("filesystem.deploy"));
-
-    // Print out our settings
-    println!("debug flag: {:?}", dbg);
-    // println!("{:?}", settings.filesystem.stage);
-
-    // hardcoded for now
-    // TODO: read from config file
     let stage_root = settings
         .get::<String>("filesystem.stage")
         .unwrap_or("stage/".to_string());
@@ -78,6 +68,13 @@ fn main() {
         .get::<String>("app.template_directory")
         .unwrap_or("templates/*.tera".to_string());
 
+    let dbg = settings.get_bool("debug").unwrap_or(false);
+    if dbg {
+        println!("settings: {:?}", settings);
+        println!("stage:    {:?}", stage_root);
+        println!("deploy:   {:?}", deploy_root);
+        println!("templates:{:?}", template_dir);
+    };
     // determine log level
     let l = cli.log_level.unwrap().to_lowercase();
     let log_lvl = if l == "trace" {

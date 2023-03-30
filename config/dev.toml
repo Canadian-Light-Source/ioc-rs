@@ -1,9 +1,9 @@
 debug = true
 
 [filesystem]
-stage = "stage_dev/"
-deploy = "deploy/ioc_dev/"
+stage = "dev/stage/"
+deploy = "dev/deploy/ioc/"
 
 [app]
 # can be a glob, e.g. "templates/**/*.tera"
-template_directory = "/opt/apps/ioc/templates/*.tera"
+template_directory = "templates/**/*.tera"

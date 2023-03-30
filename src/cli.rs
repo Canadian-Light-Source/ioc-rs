@@ -4,12 +4,9 @@ use clap::{Parser, Subcommand};
 #[derive(Parser)]
 #[command(name = "ioc")]
 #[command(author = "Niko Kivel <niko.kivel@lightsource.ca>")]
-#[command(version = "0.3.1")]
+#[command(version = "0.4.0")]
 #[command(about = "install ioc definitions", long_about = None)]
 pub struct Cli {
-    // /// Path to the deployment destination
-    // #[arg(short, long)]
-    // path: Option<String>,
     /// Path to the tempalte directory
     #[arg(short, long)]
     pub template_dir: Option<String>,
@@ -40,10 +37,8 @@ pub enum Commands {
         /// force install
         #[arg(short, long, action)]
         force: bool,
-        /// list of IOCs to deploy, comma separated
-        // #[clap(short, long, default_value = "./", value_parser, num_args = 1.., value_delimiter = ' ')]
+        /// list of IOCs to deploy, space separated
         #[clap(default_value = "", value_parser, num_args = 1.., value_delimiter = ' ')]
-        // #[clap(value_parser, num_args = 0.., value_delimiter = ' ')]
         iocs: Option<Vec<String>>,
     },
 }
