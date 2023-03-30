@@ -58,6 +58,12 @@ fn ioc_cleanup(ioc: &IOC) -> std::io::Result<()> {
     Ok(())
 }
 
+fn remove_dir(dir: impl AsRef<Path>) -> std::io::Result<()> {
+    trace!("removing directory {}", dir.as_ref().to_str().unwrap());
+    fs::remove_dir_all(dir)?;
+    Ok(())
+}
+
 fn main() {
     let cli = Cli::parse();
     let settings = Settings::build(&cli.config_file.unwrap_or("".to_string())).unwrap();
@@ -176,7 +182,22 @@ fn main() {
                             ioc.name.red().bold(),
                             e
                         ),
-                    }
+                    };
+                    match ioc_cleanup(ioc) {
+                        Ok(_) => {}
+                        Err(e) => error!(
+                            "{} clean up failed for {} with error: {}",
+                            cross!(),
+                            &ioc.name,
+                            e
+                        ),
+                    };
+                    match remove_dir(Path::new(&stage_root)) {
+                        Ok(_) => info!("{} stage root removed", tick!()),
+                        Err(e) => {
+                            error!("{} failed to remove stage root with error: {}", cross!(), e)
+                        }
+                    };
                 } else {
                     info!("{} was chosen, no deployment", "--dryrun".yellow());
                     if !retain {
