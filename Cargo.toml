@@ -1,6 +1,11 @@
 [package]
 name = "ioc"
+description = "install ioc definitions"
 version = "0.4.1"
+authors = ["Niko Kivel <niko.kivel@lightsource.ca>"]
+license = "MIT, btc"
+keywords = ["CLS", "deployment", "ioc", "tools"]
+repository = "https://github.lightsource.ca/epics-iocs/ioc/"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
