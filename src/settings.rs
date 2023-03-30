@@ -24,7 +24,7 @@ pub struct Settings {
 }
 
 impl Settings {
-    pub fn new(config_file: &str) -> Result<Config, ConfigError> {
+    pub fn build(config_file: &str) -> Result<Config, ConfigError> {
         let s = Config::builder()
             // Start off by merging in the "default" configuration file
             .add_source(File::with_name("/opt/apps/ioc/config/default").required(true))

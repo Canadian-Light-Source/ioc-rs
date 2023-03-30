@@ -25,14 +25,14 @@ pub mod log_macros;
 use crate::log_macros::{cross, exclaim, tick};
 
 fn collect_iocs(
-    ioc_names: &Vec<String>,
+    ioc_names: &[String],
     stage_root: impl AsRef<Path>,
     destination_root: impl AsRef<Path>,
 ) -> Vec<IOC> {
     let mut iocs: Vec<IOC> = Vec::new();
     debug!("collecting iocs ...");
-    for name in ioc_names.iter() {
-        let work_dir = env::current_dir().unwrap().join(&name);
+    ioc_names.iter().for_each(|name| {
+        let work_dir = env::current_dir().unwrap().join(name);
         trace!("working dir: {:?}", work_dir);
         match IOC::new(&work_dir, &stage_root, &destination_root) {
             Ok(new_ioc) => iocs.push(new_ioc),
@@ -43,7 +43,7 @@ fn collect_iocs(
                 e
             ),
         };
-    }
+    });
     iocs
 }
 
@@ -56,7 +56,7 @@ fn ioc_cleanup(ioc: &IOC) -> std::io::Result<()> {
 
 fn main() {
     let cli = Cli::parse();
-    let settings = Settings::new(&cli.config_file.unwrap_or("".to_string())).unwrap();
+    let settings = Settings::build(&cli.config_file.unwrap_or("".to_string())).unwrap();
 
     // determine log level
     let mut l = cli.log_level.unwrap().to_lowercase();
