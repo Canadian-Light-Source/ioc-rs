@@ -49,7 +49,7 @@ flowchart TD
     hash_fail --> |--force| stage
     stage --> stage_ioc
     stage_ioc --> deploy
-    
+
 
 subgraph "hash_checker"
     find_file --> no_hash
