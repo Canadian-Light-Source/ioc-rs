@@ -58,25 +58,13 @@ fn main() {
     let cli = Cli::parse();
     let settings = Settings::new(&cli.config_file.unwrap_or("".to_string())).unwrap();
 
-    let stage_root = settings
-        .get::<String>("filesystem.stage")
-        .unwrap_or("stage/".to_string());
-    let deploy_root = settings
-        .get::<String>("filesystem.deploy")
-        .unwrap_or("deploy/ioc/".to_string());
-    let template_dir = settings
-        .get::<String>("app.template_directory")
-        .unwrap_or("templates/*.tera".to_string());
-
-    let dbg = settings.get_bool("debug").unwrap_or(false);
-    if dbg {
-        println!("settings: {:?}", settings);
-        println!("stage:    {:?}", stage_root);
-        println!("deploy:   {:?}", deploy_root);
-        println!("templates:{:?}", template_dir);
-    };
     // determine log level
-    let l = cli.log_level.unwrap().to_lowercase();
+    let mut l = cli.log_level.unwrap().to_lowercase();
+    let dbg = settings.get_bool("debug").unwrap_or(false);
+    // orverride log level with configuration file
+    if dbg {
+        l = "trace".to_string()
+    };
     let log_lvl = if l == "trace" {
         LevelFilter::Trace
     } else if l == "debug" {
@@ -91,6 +79,22 @@ fn main() {
 
     // initialize logging
     SimpleLogger::new().with_level(log_lvl).init().unwrap();
+
+    let stage_root = settings
+        .get::<String>("filesystem.stage")
+        .unwrap_or("stage/".to_string());
+    let deploy_root = settings
+        .get::<String>("filesystem.deploy")
+        .unwrap_or("deploy/ioc/".to_string());
+    let template_dir = settings
+        .get::<String>("app.template_directory")
+        .unwrap_or("templates/*.tera".to_string());
+
+    trace!("configuration ---------------------------");
+    trace!("  stage:    {:?}", stage_root);
+    trace!("  deploy:   {:?}", deploy_root);
+    trace!("  templates:{:?}", template_dir);
+    trace!("-----------------------------------------");
 
     // template directory from cli, defaults to configuration files
     let template_dir = &cli.template_dir.unwrap_or(template_dir);
