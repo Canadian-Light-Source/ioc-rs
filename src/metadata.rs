@@ -5,7 +5,7 @@ const REPOSITORY: &str = env!("CARGO_PKG_REPOSITORY");
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[derive(Clone, Copy)]
-pub struct Metadata<'a> {
+pub struct PackageData<'a> {
     name: &'a str,
     description: &'a str,
     version: &'a str,
@@ -13,9 +13,9 @@ pub struct Metadata<'a> {
     repo: &'a str,
 }
 
-impl Metadata<'_> {
+impl PackageData<'_> {
     pub fn new() -> Self {
-        Metadata {
+        PackageData {
             name: NAME,
             description: DESCRIPTION,
             version: VERSION,

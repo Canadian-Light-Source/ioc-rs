@@ -23,7 +23,7 @@ mod settings;
 use settings::Settings;
 
 mod metadata;
-use metadata::Metadata;
+use metadata::PackageData;
 
 pub mod log_macros;
 use crate::log_macros::{cross, exclaim, tick};
@@ -90,13 +90,13 @@ fn main() {
     // initialize logging
     SimpleLogger::new().with_level(log_lvl).init().unwrap();
 
-    let metadata = Metadata::new();
+    let crate_info = PackageData::new();
     trace!("metadata --------------------------------");
-    trace!("  name   : {}", metadata.get_name());
-    trace!("  desc   : {}", metadata.get_description());
-    trace!("  version: {}", metadata.get_version());
-    trace!("  authors: {}", metadata.get_authors());
-    trace!("  repo:    {}", metadata.get_repository());
+    trace!("  name   : {}", crate_info.get_name());
+    trace!("  desc   : {}", crate_info.get_description());
+    trace!("  version: {}", crate_info.get_version());
+    trace!("  authors: {}", crate_info.get_authors());
+    trace!("  repo:    {}", crate_info.get_repository());
     trace!("-----------------------------------------");
 
     let stage_root = settings
