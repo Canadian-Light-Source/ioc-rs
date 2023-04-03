@@ -20,6 +20,8 @@ use crate::diff::get_patch;
 use crate::log_macros::tick;
 use crate::PackageData;
 
+use crate::render;
+
 /// IOC structure
 #[derive(Debug)]
 pub struct IOC {
@@ -73,61 +75,6 @@ impl IOC {
         }
     }
 
-    fn render(&self, template_dir: &str) -> Result<String, Error> {
-        let user_name = match get_current_username() {
-            Some(uname) => uname,
-            None => "unkown".into(),
-        };
-
-        let tera = match Tera::new(template_dir) {
-            Ok(t) => t,
-            Err(e) => {
-                error!("Parsing error(s): {}", e);
-                ::std::process::exit(1);
-            }
-        };
-        trace!("{} tera parser created", tick!());
-
-        let metadata = PackageData::new();
-        let local: DateTime<Local> = Local::now();
-        let formatted = format!("{}", local.format("%Y-%m-%d %H:%M:%S.%f"));
-        let mut context = Context::new();
-        context.insert("tool", metadata.get_name());
-        context.insert("version", metadata.get_version());
-        context.insert("IOC", &self.name);
-        context.insert("user", &user_name.as_os_str().to_str());
-        context.insert("destination", &self.destination);
-        context.insert("date", &formatted);
-        trace!(
-            "{} tera context created: {:?}",
-            tick!(),
-            &context.clone().into_json()
-        );
-
-        trace!("{} tera rendering ...", tick!());
-        tera.render("startup.tera", &context)
-    }
-
-    fn wrap_startup(&self, template_dir: &str) -> std::io::Result<()> {
-        let old = &self.stage.join("startup.iocsh");
-        let ioc_startup = "startup.iocsh_".to_owned() + &self.name;
-        let new = &self.stage.join(ioc_startup);
-        fs::copy(old.as_path(), new.as_path())?;
-        trace!(
-            "{} copied {:?} -> {:?}",
-            tick!(),
-            &old.as_path(),
-            &new.as_path()
-        );
-        write_file(old, self.render(template_dir).unwrap())?;
-        trace!(
-            "{} template rendered and written to {:?}",
-            tick!(),
-            &old.as_path()
-        );
-        Ok(())
-    }
-
     pub fn stage(&self, template_dir: &str) -> std::io::Result<()> {
         trace!("staging {}", self.name.blue());
         if self.stage.exists() {
@@ -141,7 +88,7 @@ impl IOC {
             &self.source.as_path(),
             &self.stage.as_path()
         );
-        self.wrap_startup(template_dir)?;
+        render::render_startup(&self, template_dir)?;
         debug!("{} staging of {:?} complete.", tick!(), self.name);
         Ok(())
     }
