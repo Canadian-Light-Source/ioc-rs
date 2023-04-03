@@ -1,13 +1,13 @@
 use std::env;
 use std::fs;
 use std::path::Path;
-// use std::process::exit;
 
 // for CLI
 use clap::Parser;
 
 // logging
 use colored::Colorize;
+use config::Config;
 use log::{debug, error, info, trace, warn};
 use simple_logger::SimpleLogger;
 
@@ -64,17 +64,6 @@ fn remove_dir(dir: impl AsRef<Path>) -> std::io::Result<()> {
     Ok(())
 }
 
-#[derive(Debug, Clone)]
-struct AppConfig {
-    pub template_dir: String,
-}
-
-impl AppConfig {
-    pub fn new(template_dir: String) -> AppConfig {
-        AppConfig { template_dir }
-    }
-}
-
 fn main() {
     let cli = Cli::parse();
     let config_file = cli.config_file.clone().unwrap_or("".to_string());
@@ -108,9 +97,6 @@ fn main() {
     trace!("  deploy:   {:?}", deploy_root);
     trace!("  templates:{:?}", template_dir);
     trace!("-----------------------------------------");
-
-    // Todo: remove this hack, consider refactoring to use settings directly or deserializing settings
-    let runtime_config = AppConfig::new(template_dir.clone());
 
     // CLI commands
     // TODO: terribly nested, check for way to flatten
@@ -157,7 +143,7 @@ fn main() {
                 }
                 // staging
                 trace!("staging {}", ioc.name.blue().bold());
-                perform_stage_deploy(runtime_config.to_owned(), ioc, nodiff);
+                perform_stage_deploy(&settings, ioc, nodiff);
                 // deployment
                 if !dryrun {
                     trace!("deploying {}", ioc.name.blue().bold());
@@ -213,9 +199,11 @@ fn main() {
 
 // fn perform_deployment(ioc: &mut IOC) {}
 
-fn perform_stage_deploy(conf: AppConfig, ioc: &IOC, nodiff: &bool) {
+fn perform_stage_deploy(settings: &Config, ioc: &IOC, nodiff: &bool) {
     trace!("staging {}", ioc.name.blue().bold());
-    match ioc.stage(conf.template_dir.as_str()) {
+    let template_dir = settings.get::<String>("app.template_directory").unwrap();
+    match ioc.stage(template_dir.as_str()) {
+        // match ioc.stage(conf.template_dir.as_str()) {
         Ok(_) => info!("{} staged {}", tick!(), ioc.name.blue()),
         Err(e) => error!(
             "{} staging of {} failed with: {}",
