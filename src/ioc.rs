@@ -14,10 +14,11 @@ use file_hashing::get_hash_folder;
 
 // logging
 use colored::Colorize;
-use log::{debug, error, trace};
+use log::{debug, error, info, trace};
 
+use crate::diff::get_patch;
 use crate::log_macros::tick;
-use crate::Metadata;
+use crate::PackageData;
 
 /// IOC structure
 #[derive(Debug)]
@@ -87,7 +88,7 @@ impl IOC {
         };
         trace!("{} tera parser created", tick!());
 
-        let metadata = Metadata::new();
+        let metadata = PackageData::new();
         let local: DateTime<Local> = Local::now();
         let formatted = format!("{}", local.format("%Y-%m-%d %H:%M:%S.%f"));
         let mut context = Context::new();
@@ -155,6 +156,12 @@ impl IOC {
             tick!(),
             &self.hash_file.as_path()
         );
+        Ok(())
+    }
+
+    pub fn diff_ioc(&self) -> std::io::Result<()> {
+        trace!("diff for {}", self.name.blue());
+        diff_recursively(&self.stage, &self.destination)?;
         Ok(())
     }
 
@@ -242,6 +249,43 @@ fn copy_recursively(
             }
         } else {
             fs::copy(entry.path(), destination.as_ref().join(entry.file_name()))?;
+        }
+    }
+    Ok(())
+}
+
+fn diff_recursively(
+    source: impl AsRef<Path>,
+    destination: impl AsRef<Path>,
+) -> std::io::Result<()> {
+    for entry in fs::read_dir(source)? {
+        let entry = entry?;
+        if entry.file_name().into_string().unwrap().starts_with('.') {
+            continue;
+        }
+        let filetype = entry.file_type()?;
+        if filetype.is_dir() {
+            if entry.file_name().into_string().unwrap() == "cfg" {
+                diff_recursively(entry.path(), destination.as_ref().join(entry.file_name()))?;
+            } else {
+                diff_recursively(entry.path(), destination.as_ref())?; // flatten the structure
+            }
+        } else {
+            let patch = get_patch(entry.path(), destination.as_ref().join(entry.file_name()))?;
+            if patch.lines().count() > 3 {
+                info!("===========================================================");
+                info!("--- original: {}", entry.path().to_str().unwrap());
+                info!(
+                    "+++ modified: {}",
+                    destination
+                        .as_ref()
+                        .join(entry.file_name())
+                        .to_str()
+                        .unwrap()
+                );
+                info!("DIFF:\n{}", patch);
+                info!("===========================================================");
+            }
         }
     }
     Ok(())

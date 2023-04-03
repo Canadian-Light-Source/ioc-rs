@@ -13,6 +13,7 @@ use log::{debug, error, info, trace, warn};
 use simple_logger::SimpleLogger;
 
 // my mods
+mod diff;
 pub mod ioc;
 use ioc::IOC;
 
@@ -23,7 +24,7 @@ mod settings;
 use settings::Settings;
 
 mod metadata;
-use metadata::Metadata;
+use metadata::PackageData;
 
 pub mod log_macros;
 use crate::log_macros::{cross, exclaim, tick};
@@ -64,6 +65,17 @@ fn remove_dir(dir: impl AsRef<Path>) -> std::io::Result<()> {
     Ok(())
 }
 
+#[derive(Debug, Clone)]
+struct AppConfig {
+    pub template_dir: String,
+}
+
+impl AppConfig {
+    pub fn new(template_dir: String) -> AppConfig {
+        AppConfig { template_dir }
+    }
+}
+
 fn main() {
     let cli = Cli::parse();
     let settings = Settings::build(&cli.config_file.unwrap_or("".to_string())).unwrap();
@@ -90,13 +102,13 @@ fn main() {
     // initialize logging
     SimpleLogger::new().with_level(log_lvl).init().unwrap();
 
-    let metadata = Metadata::new();
+    let crate_info = PackageData::new();
     trace!("metadata --------------------------------");
-    trace!("  name   : {}", metadata.get_name());
-    trace!("  desc   : {}", metadata.get_description());
-    trace!("  version: {}", metadata.get_version());
-    trace!("  authors: {}", metadata.get_authors());
-    trace!("  repo:    {}", metadata.get_repository());
+    trace!("  name   : {}", crate_info.get_name());
+    trace!("  desc   : {}", crate_info.get_description());
+    trace!("  version: {}", crate_info.get_version());
+    trace!("  authors: {}", crate_info.get_authors());
+    trace!("  repo:    {}", crate_info.get_repository());
     trace!("-----------------------------------------");
 
     let stage_root = settings
@@ -119,18 +131,22 @@ fn main() {
     let template_dir = &cli.template_dir.unwrap_or(template_dir);
     trace!("template_dir: {:?}", template_dir);
 
+    let runtime_config = AppConfig::new(template_dir.clone());
+
     // CLI commands
     // TODO: terribly nested, check for way to flatten
     match &cli.command {
         Some(Commands::Install {
             dryrun,
             retain,
+            nodiff,
             force,
             iocs,
         }) => {
             debug!("command: <{}>", "install".yellow());
             debug!("dryrun: {}", dryrun);
             debug!("retain: {}", retain);
+            debug!("no diff: {}", nodiff);
             debug!("force:  {}", force);
             let ioc_list = match iocs {
                 Some(i) => collect_iocs(i, &stage_root, &deploy_root),
@@ -162,15 +178,7 @@ fn main() {
                 }
                 // staging
                 trace!("staging {}", ioc.name.blue().bold());
-                match ioc.stage(template_dir) {
-                    Ok(_) => info!("{} staged {}", tick!(), ioc.name.blue()),
-                    Err(e) => error!(
-                        "{} staging of {} failed with: {}",
-                        cross!(),
-                        ioc.name.red().bold(),
-                        e
-                    ),
-                }
+                perform_stage_deploy(runtime_config.to_owned(), ioc, nodiff);
                 // deployment
                 if !dryrun {
                     trace!("deploying {}", ioc.name.blue().bold());
@@ -221,5 +229,31 @@ fn main() {
             }
         }
         None => println!("NO ACTION --> BYE"),
+    }
+}
+
+// fn perform_deployment(ioc: &mut IOC) {}
+
+fn perform_stage_deploy(conf: AppConfig, ioc: &IOC, nodiff: &bool) {
+    trace!("staging {}", ioc.name.blue().bold());
+    match ioc.stage(conf.template_dir.as_str()) {
+        Ok(_) => info!("{} staged {}", tick!(), ioc.name.blue()),
+        Err(e) => error!(
+            "{} staging of {} failed with: {}",
+            cross!(),
+            ioc.name.red().bold(),
+            e
+        ),
+    }
+    if ioc.destination.exists() && !nodiff {
+        match ioc.diff_ioc() {
+            Ok(_) => info!("{} diffed {} see output above", tick!(), ioc.name.blue()),
+            Err(e) => error!(
+                "{} diff of {} failed with: {}",
+                cross!(),
+                ioc.name.red().bold(),
+                e
+            ),
+        }
     }
 }
