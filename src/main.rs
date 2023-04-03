@@ -139,12 +139,14 @@ fn main() {
         Some(Commands::Install {
             dryrun,
             retain,
+            nodiff,
             force,
             iocs,
         }) => {
             debug!("command: <{}>", "install".yellow());
             debug!("dryrun: {}", dryrun);
             debug!("retain: {}", retain);
+            debug!("no diff: {}", nodiff);
             debug!("force:  {}", force);
             let ioc_list = match iocs {
                 Some(i) => collect_iocs(i, &stage_root, &deploy_root),
@@ -176,7 +178,7 @@ fn main() {
                 }
                 // staging
                 trace!("staging {}", ioc.name.blue().bold());
-                perform_stage_deploy(runtime_config.to_owned(), ioc);
+                perform_stage_deploy(runtime_config.to_owned(), ioc, nodiff);
                 // deployment
                 if !dryrun {
                     trace!("deploying {}", ioc.name.blue().bold());
@@ -232,7 +234,7 @@ fn main() {
 
 // fn perform_deployment(ioc: &mut IOC) {}
 
-fn perform_stage_deploy(conf: AppConfig, ioc: &IOC) {
+fn perform_stage_deploy(conf: AppConfig, ioc: &IOC, nodiff: &bool) {
     trace!("staging {}", ioc.name.blue().bold());
     match ioc.stage(conf.template_dir.as_str()) {
         Ok(_) => info!("{} staged {}", tick!(), ioc.name.blue()),
@@ -243,7 +245,7 @@ fn perform_stage_deploy(conf: AppConfig, ioc: &IOC) {
             e
         ),
     }
-    if ioc.destination.exists() {
+    if ioc.destination.exists() && !nodiff {
         match ioc.diff_ioc() {
             Ok(_) => info!("{} diffed {} see output above", tick!(), ioc.name.blue()),
             Err(e) => error!(

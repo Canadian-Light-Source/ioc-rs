@@ -28,9 +28,12 @@ pub enum Commands {
         /// perform dryrun
         #[arg(short, long, action)]
         dryrun: bool,
-        /// perform dryrun
+        /// retain staging data
         #[arg(long, action)]
         retain: bool,
+        /// do not show the diff
+        #[arg(long, action)]
+        nodiff: bool,
         /// force install
         #[arg(short, long, action)]
         force: bool,
