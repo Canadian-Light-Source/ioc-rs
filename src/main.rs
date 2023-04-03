@@ -8,7 +8,6 @@ use clap::Parser;
 
 // logging
 use colored::Colorize;
-use log::LevelFilter;
 use log::{debug, error, info, trace, warn};
 use simple_logger::SimpleLogger;
 
@@ -78,29 +77,18 @@ impl AppConfig {
 
 fn main() {
     let cli = Cli::parse();
-    let settings = Settings::build(&cli.config_file.unwrap_or("".to_string())).unwrap();
+    let config_file = cli.config_file.clone().unwrap_or("".to_string());
+    let settings = Settings::build(&config_file).unwrap();
 
     // determine log level
-    let mut l = cli.log_level.unwrap().to_lowercase();
     let dbg = settings.get_bool("debug").unwrap_or(false);
-    // orverride log level with configuration file
-    if dbg {
-        l = "trace".to_string()
-    };
-    let log_lvl = if l == "trace" {
-        LevelFilter::Trace
-    } else if l == "debug" {
-        LevelFilter::Debug
-    } else if l == "warn" {
-        LevelFilter::Warn
-    } else if l == "info" {
-        LevelFilter::Info
-    } else {
-        LevelFilter::Error
-    }; // always report errors
+    let log_lvl = cli.clone().get_level_filter(dbg);
 
     // initialize logging
-    SimpleLogger::new().with_level(log_lvl).init().unwrap();
+    SimpleLogger::new()
+        .with_level(log_lvl.to_owned())
+        .init()
+        .unwrap();
 
     let crate_info = PackageData::new();
     trace!("metadata --------------------------------");

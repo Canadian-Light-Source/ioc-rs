@@ -1,7 +1,8 @@
 use clap::{Parser, Subcommand};
+use log::LevelFilter;
 
 // CLI =================================================
-#[derive(Parser)]
+#[derive(Parser, Clone)]
 #[command(about = "Tool for the deployment of ioc definitions", long_about = None)]
 pub struct Cli {
     /// Path to the tempalte directory
@@ -21,7 +22,29 @@ pub struct Cli {
     pub command: Option<Commands>,
 }
 
-#[derive(Subcommand, Debug)]
+impl Cli {
+    /// returns log level filter based on the command line arguments, if debug is enabled in the configuration, the CLI is overridden
+    pub fn get_level_filter(self, debug: bool) -> LevelFilter {
+        let mut cli_level = self.log_level.unwrap().to_lowercase();
+
+        if debug {
+            cli_level = "debug".to_string()
+        };
+        if cli_level == "trace" {
+            LevelFilter::Trace
+        } else if cli_level == "debug" {
+            LevelFilter::Debug
+        } else if cli_level == "warn" {
+            LevelFilter::Warn
+        } else if cli_level == "info" {
+            LevelFilter::Info
+        } else {
+            LevelFilter::Error
+        } // always report errors
+    }
+}
+
+#[derive(Subcommand, Debug, Clone)]
 pub enum Commands {
     /// delpoyment command
     Install {

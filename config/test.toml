@@ -1,4 +1,4 @@
-debug = true
+debug = false
 
 [filesystem]
 stage = "TEST_stage_dev/"
