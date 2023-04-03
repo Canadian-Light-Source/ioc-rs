@@ -5,6 +5,13 @@ Currently the tool is only available for testing.
 The deployment will write to `./deploy/ioc/${IOC}`.
 At deployment a hash will be generated and stored in `./deploy/ioc/data/${IOC}/hash`
 
+## License
+MIT or GPLv3 License
+
+## Prerequisites
+
+- app configuration in `/opt/apps/ioc/config/default.{yaml,toml,json}`
+
 ## `ioc install`
 
 Install the IOC.

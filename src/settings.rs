@@ -26,6 +26,14 @@ pub struct Settings {
 impl Settings {
     pub fn build(config_file: &str) -> Result<Config, ConfigError> {
         let s = Config::builder()
+            .set_default("debug", false)
+            .unwrap()
+            .set_default("filesystem.stage", "./stage")
+            .unwrap()
+            .set_default("filesystem.deploy", "./ioc/delpoy")
+            .unwrap()
+            .set_default("app.templates", "/opt/apps/ioc/templates/*.tera")
+            .unwrap()
             // Start off by merging in the "default" configuration file
             .add_source(File::with_name("/opt/apps/ioc/config/default").required(true))
             // local dev configuration
@@ -34,5 +42,9 @@ impl Settings {
             .add_source(File::with_name(config_file).required(!config_file.is_empty()))
             .build()?;
         Ok(s)
+    }
+
+    pub fn set_debug(&mut self, debug: bool) {
+        self.debug = debug;
     }
 }

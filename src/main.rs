@@ -8,7 +8,6 @@ use clap::Parser;
 
 // logging
 use colored::Colorize;
-use log::LevelFilter;
 use log::{debug, error, info, trace, warn};
 use simple_logger::SimpleLogger;
 
@@ -78,29 +77,18 @@ impl AppConfig {
 
 fn main() {
     let cli = Cli::parse();
-    let settings = Settings::build(&cli.config_file.unwrap_or("".to_string())).unwrap();
+    let config_file = cli.config_file.clone().unwrap_or("".to_string());
+    let settings = Settings::build(&config_file).unwrap();
 
     // determine log level
-    let mut l = cli.log_level.unwrap().to_lowercase();
-    let dbg = settings.get_bool("debug").unwrap_or(false);
-    // orverride log level with configuration file
-    if dbg {
-        l = "trace".to_string()
-    };
-    let log_lvl = if l == "trace" {
-        LevelFilter::Trace
-    } else if l == "debug" {
-        LevelFilter::Debug
-    } else if l == "warn" {
-        LevelFilter::Warn
-    } else if l == "info" {
-        LevelFilter::Info
-    } else {
-        LevelFilter::Error
-    }; // always report errors
+    let dbg = settings.get_bool("debug").unwrap();
+    let log_lvl = cli.get_level_filter(dbg);
 
     // initialize logging
-    SimpleLogger::new().with_level(log_lvl).init().unwrap();
+    SimpleLogger::new()
+        .with_level(log_lvl.to_owned())
+        .init()
+        .unwrap();
 
     let crate_info = PackageData::new();
     trace!("metadata --------------------------------");
@@ -111,15 +99,9 @@ fn main() {
     trace!("  repo:    {}", crate_info.get_repository());
     trace!("-----------------------------------------");
 
-    let stage_root = settings
-        .get::<String>("filesystem.stage")
-        .unwrap_or("stage/".to_string());
-    let deploy_root = settings
-        .get::<String>("filesystem.deploy")
-        .unwrap_or("deploy/ioc/".to_string());
-    let template_dir = settings
-        .get::<String>("app.template_directory")
-        .unwrap_or("templates/*.tera".to_string());
+    let stage_root = settings.get::<String>("filesystem.stage").unwrap();
+    let deploy_root = settings.get::<String>("filesystem.deploy").unwrap();
+    let template_dir = settings.get::<String>("app.template_directory").unwrap();
 
     trace!("configuration ---------------------------");
     trace!("  stage:    {:?}", stage_root);
@@ -127,10 +109,7 @@ fn main() {
     trace!("  templates:{:?}", template_dir);
     trace!("-----------------------------------------");
 
-    // template directory from cli, defaults to configuration files
-    let template_dir = &cli.template_dir.unwrap_or(template_dir);
-    trace!("template_dir: {:?}", template_dir);
-
+    // Todo: remove this hack, consider refactoring to use settings directly or deserializing settings
     let runtime_config = AppConfig::new(template_dir.clone());
 
     // CLI commands
