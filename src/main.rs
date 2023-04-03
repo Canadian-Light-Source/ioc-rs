@@ -7,7 +7,10 @@ use log::debug;
 use simple_logger::SimpleLogger;
 
 // my mods
+pub mod log_macros;
+
 mod diff;
+mod install;
 pub mod ioc;
 
 pub mod cli;
@@ -18,10 +21,6 @@ use settings::Settings;
 
 mod metadata;
 use metadata::PackageData;
-
-mod install;
-
-pub mod log_macros;
 
 fn main() {
     let cli = Cli::parse();
