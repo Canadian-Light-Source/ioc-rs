@@ -12,6 +12,7 @@ pub mod log_macros;
 mod diff;
 mod install;
 pub mod ioc;
+mod render;
 
 pub mod cli;
 use cli::{Cli, Commands};
