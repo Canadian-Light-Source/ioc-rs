@@ -1,12 +1,7 @@
 use std::fs;
 use std::fs::File;
-use std::io::prelude::*;
 use std::io::{self, BufRead};
 use std::path::{Path, PathBuf};
-
-use chrono::prelude::*;
-use tera::{Context, Error, Tera};
-use users::get_current_username;
 
 // for checksum
 use blake2::{Blake2s256, Digest};
@@ -14,12 +9,11 @@ use file_hashing::get_hash_folder;
 
 // logging
 use colored::Colorize;
-use log::{debug, error, info, trace};
+use log::{debug, info, trace};
 
 use crate::diff::get_patch;
+use crate::hash_ioc;
 use crate::log_macros::tick;
-use crate::PackageData;
-
 use crate::render;
 
 /// IOC structure
@@ -88,21 +82,8 @@ impl IOC {
             &self.source.as_path(),
             &self.stage.as_path()
         );
-        render::render_startup(&self, template_dir)?;
+        render::render_startup(self, template_dir)?;
         debug!("{} staging of {:?} complete.", tick!(), self.name);
-        Ok(())
-    }
-
-    pub fn hash_ioc(&self) -> std::io::Result<()> {
-        let hash = calc_directory_hash(&self.stage);
-        trace!("hash: {:?}", hash);
-        fs::create_dir_all(&self.data)?;
-        write_file(&self.hash_file, hash)?;
-        debug!(
-            "{} hash_file {:?} written.",
-            tick!(),
-            &self.hash_file.as_path()
-        );
         Ok(())
     }
 
@@ -118,7 +99,7 @@ impl IOC {
             remove_dir_contents(&self.destination)?; // prep deploy directory
             trace!("{} removed {:?}", tick!(), &self.destination);
         }
-        self.hash_ioc()?;
+        hash_ioc::hash_ioc(self)?;
         copy_recursively(&self.stage, &self.destination)?;
         trace!(
             "{} copied {:?} -> {:?}",
@@ -154,12 +135,6 @@ impl IOC {
         };
         Ok(valid_hash)
     }
-}
-
-fn write_file(file_name: impl AsRef<Path>, content: String) -> std::io::Result<()> {
-    let mut file = File::create(file_name)?;
-    file.write_all(content.as_bytes())?;
-    Ok(())
 }
 
 fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
