@@ -5,10 +5,6 @@ use log::LevelFilter;
 #[derive(Parser, Clone)]
 #[command(about = "Tool for the deployment of ioc definitions", long_about = None)]
 pub struct Cli {
-    /// Path to the tempalte directory
-    #[arg(short, long)]
-    pub template_dir: Option<String>,
-
     /// logger
     #[arg(short, long, default_value = "info")]
     pub log_level: Option<String>,
@@ -24,8 +20,8 @@ pub struct Cli {
 
 impl Cli {
     /// returns log level filter based on the command line arguments, if debug is enabled in the configuration, the CLI is overridden
-    pub fn get_level_filter(self, debug: bool) -> LevelFilter {
-        let mut cli_level = self.log_level.unwrap().to_lowercase();
+    pub fn get_level_filter(&self, debug: bool) -> LevelFilter {
+        let mut cli_level = self.log_level.as_ref().unwrap().to_lowercase();
 
         if debug {
             cli_level = "debug".to_string()
