@@ -10,6 +10,7 @@ use simple_logger::SimpleLogger;
 pub mod log_macros;
 
 mod diff;
+mod hash_ioc;
 mod install;
 pub mod ioc;
 mod render;
