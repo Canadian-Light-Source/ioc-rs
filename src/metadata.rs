@@ -1,3 +1,5 @@
+use log::trace;
+
 const AUTHORS: &str = env!("CARGO_PKG_AUTHORS");
 const DESCRIPTION: &str = env!("CARGO_PKG_DESCRIPTION");
 const NAME: &str = env!("CARGO_PKG_NAME");
@@ -38,5 +40,13 @@ impl PackageData<'_> {
     }
     pub fn get_repository(&self) -> &str {
         self.repo
+    }
+
+    pub fn report(&self) {
+        trace!("  name   : {}", self.get_name());
+        trace!("  desc   : {}", self.get_description());
+        trace!("  version: {}", self.get_version());
+        trace!("  authors: {}", self.get_authors());
+        trace!("  repo:    {}", self.get_repository());
     }
 }
