@@ -13,6 +13,7 @@ use log::{debug, error, info, trace, warn};
 use simple_logger::SimpleLogger;
 
 // my mods
+mod diff;
 pub mod ioc;
 use ioc::IOC;
 
@@ -62,6 +63,17 @@ fn remove_dir(dir: impl AsRef<Path>) -> std::io::Result<()> {
     trace!("removing directory {}", dir.as_ref().to_str().unwrap());
     fs::remove_dir_all(dir)?;
     Ok(())
+}
+
+#[derive(Debug, Clone)]
+struct AppConfig {
+    pub template_dir: String,
+}
+
+impl AppConfig {
+    pub fn new(template_dir: String) -> AppConfig {
+        AppConfig { template_dir }
+    }
 }
 
 fn main() {
@@ -119,6 +131,8 @@ fn main() {
     let template_dir = &cli.template_dir.unwrap_or(template_dir);
     trace!("template_dir: {:?}", template_dir);
 
+    let runtime_config = AppConfig::new(template_dir.clone());
+
     // CLI commands
     // TODO: terribly nested, check for way to flatten
     match &cli.command {
@@ -162,15 +176,7 @@ fn main() {
                 }
                 // staging
                 trace!("staging {}", ioc.name.blue().bold());
-                match ioc.stage(template_dir) {
-                    Ok(_) => info!("{} staged {}", tick!(), ioc.name.blue()),
-                    Err(e) => error!(
-                        "{} staging of {} failed with: {}",
-                        cross!(),
-                        ioc.name.red().bold(),
-                        e
-                    ),
-                }
+                perform_stage_deploy(runtime_config.to_owned(), ioc);
                 // deployment
                 if !dryrun {
                     trace!("deploying {}", ioc.name.blue().bold());
@@ -221,5 +227,31 @@ fn main() {
             }
         }
         None => println!("NO ACTION --> BYE"),
+    }
+}
+
+// fn perform_deployment(ioc: &mut IOC) {}
+
+fn perform_stage_deploy(conf: AppConfig, ioc: &IOC) {
+    trace!("staging {}", ioc.name.blue().bold());
+    match ioc.stage(conf.template_dir.as_str()) {
+        Ok(_) => info!("{} staged {}", tick!(), ioc.name.blue()),
+        Err(e) => error!(
+            "{} staging of {} failed with: {}",
+            cross!(),
+            ioc.name.red().bold(),
+            e
+        ),
+    }
+    if ioc.destination.exists() {
+        match ioc.diff_ioc() {
+            Ok(_) => info!("{} diffed {} see output above", tick!(), ioc.name.blue()),
+            Err(e) => error!(
+                "{} diff of {} failed with: {}",
+                cross!(),
+                ioc.name.red().bold(),
+                e
+            ),
+        }
     }
 }

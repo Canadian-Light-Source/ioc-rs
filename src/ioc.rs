@@ -14,8 +14,9 @@ use file_hashing::get_hash_folder;
 
 // logging
 use colored::Colorize;
-use log::{debug, error, trace};
+use log::{debug, error, info, trace};
 
+use crate::diff::get_patch;
 use crate::log_macros::tick;
 use crate::PackageData;
 
@@ -158,6 +159,12 @@ impl IOC {
         Ok(())
     }
 
+    pub fn diff_ioc(&self) -> std::io::Result<()> {
+        trace!("diff for {}", self.name.blue());
+        diff_recursively(&self.stage, &self.destination)?;
+        Ok(())
+    }
+
     pub fn deploy(&self) -> std::io::Result<()> {
         trace!("deploying {}", self.name.blue());
         if self.destination.exists() {
@@ -242,6 +249,43 @@ fn copy_recursively(
             }
         } else {
             fs::copy(entry.path(), destination.as_ref().join(entry.file_name()))?;
+        }
+    }
+    Ok(())
+}
+
+fn diff_recursively(
+    source: impl AsRef<Path>,
+    destination: impl AsRef<Path>,
+) -> std::io::Result<()> {
+    for entry in fs::read_dir(source)? {
+        let entry = entry?;
+        if entry.file_name().into_string().unwrap().starts_with('.') {
+            continue;
+        }
+        let filetype = entry.file_type()?;
+        if filetype.is_dir() {
+            if entry.file_name().into_string().unwrap() == "cfg" {
+                diff_recursively(entry.path(), destination.as_ref().join(entry.file_name()))?;
+            } else {
+                diff_recursively(entry.path(), destination.as_ref())?; // flatten the structure
+            }
+        } else {
+            let patch = get_patch(entry.path(), destination.as_ref().join(entry.file_name()))?;
+            if patch.lines().count() > 3 {
+                info!("===========================================================");
+                info!("--- original: {}", entry.path().to_str().unwrap());
+                info!(
+                    "+++ modified: {}",
+                    destination
+                        .as_ref()
+                        .join(entry.file_name())
+                        .to_str()
+                        .unwrap()
+                );
+                info!("DIFF:\n{}", patch);
+                info!("===========================================================");
+            }
         }
     }
     Ok(())
