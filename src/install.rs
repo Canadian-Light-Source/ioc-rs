@@ -2,7 +2,7 @@ use std::{env, path::Path};
 
 use colored::Colorize;
 use config::Config;
-use log::{debug, error, info, trace, warn};
+use log::{debug, error, info, trace};
 use std::fs;
 
 use crate::{

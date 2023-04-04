@@ -54,7 +54,6 @@ pub fn check_hash(ioc: &IOC, force: &bool) -> Result<String, String> {
 
     let valid_hash = match hash == get_directory_hash(&ioc.destination) {
         false => {
-            // warn!("{} hash mismatch!", exclaim!());
             if *force {
                 warn!(
                     "{} hash mismatch, overwritten by {}",
@@ -63,7 +62,6 @@ pub fn check_hash(ioc: &IOC, force: &bool) -> Result<String, String> {
                 );
                 return Ok(hash);
             } else {
-                // error!("hash mismatch!");
                 error!(
                     "{} --> check destination <{:?}> and use `{} {}` to deploy regardless",
                     cross!(),
