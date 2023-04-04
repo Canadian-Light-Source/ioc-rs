@@ -14,6 +14,7 @@ mod hash_ioc;
 mod install;
 pub mod ioc;
 mod render;
+mod stage;
 
 pub mod cli;
 use cli::{Cli, Commands};
@@ -58,6 +59,10 @@ fn main() {
             debug!("force:  {}", force);
             // worker
             install::ioc_install(iocs, &settings, dryrun, retain, nodiff, force);
+        }
+        Some(Commands::Stage { ioc }) => {
+            debug!("stage: {:?}", ioc);
+            stage::ioc_stage(ioc, None, &settings);
         }
         None => println!("no active command, check --help for more information."),
     }

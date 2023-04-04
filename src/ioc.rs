@@ -12,7 +12,7 @@ use crate::log_macros::tick;
 use crate::render;
 
 /// IOC structure
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct IOC {
     /// name of the IOC
     pub name: String,

@@ -9,6 +9,7 @@ use crate::{
     hash_ioc,
     ioc::IOC,
     log_macros::{cross, exclaim, tick},
+    stage,
 };
 
 // TODO: move to function
@@ -54,7 +55,19 @@ pub fn ioc_install(
         }
         // staging
         trace!("staging {}", ioc.name.blue().bold());
-        perform_stage_deploy(ioc, template_dir.as_str(), nodiff);
+        stage::ioc_stage(&None, Some(ioc.clone()), settings);
+        if ioc.destination.exists() && !nodiff {
+            match ioc.diff_ioc() {
+                Ok(_) => info!("{} diffed {} see output above", tick!(), ioc.name.blue()),
+                Err(e) => error!(
+                    "{} diff of {} failed with: {}",
+                    cross!(),
+                    ioc.name.red().bold(),
+                    e
+                ),
+            }
+        }
+
         // deployment
         if !dryrun {
             trace!("deploying {}", ioc.name.blue().bold());
@@ -139,28 +152,4 @@ fn remove_dir(dir: impl AsRef<Path>) -> std::io::Result<()> {
     trace!("removing directory {}", dir.as_ref().to_str().unwrap());
     fs::remove_dir_all(dir)?;
     Ok(())
-}
-
-fn perform_stage_deploy(ioc: &IOC, template_dir: &str, nodiff: &bool) {
-    trace!("staging {}", ioc.name.blue().bold());
-    match ioc.stage(template_dir) {
-        Ok(_) => info!("{} staged {}", tick!(), ioc.name.blue()),
-        Err(e) => error!(
-            "{} staging of {} failed with: {}",
-            cross!(),
-            ioc.name.red().bold(),
-            e
-        ),
-    }
-    if ioc.destination.exists() && !nodiff {
-        match ioc.diff_ioc() {
-            Ok(_) => info!("{} diffed {} see output above", tick!(), ioc.name.blue()),
-            Err(e) => error!(
-                "{} diff of {} failed with: {}",
-                cross!(),
-                ioc.name.red().bold(),
-                e
-            ),
-        }
-    }
 }
