@@ -1,11 +1,6 @@
 use std::fs;
-use std::fs::File;
-use std::io::{self, BufRead};
+use std::io;
 use std::path::{Path, PathBuf};
-
-// for checksum
-use blake2::{Blake2s256, Digest};
-use file_hashing::get_hash_folder;
 
 // logging
 use colored::Colorize;
@@ -115,40 +110,6 @@ impl IOC {
         );
         Ok(())
     }
-
-    /// check whether destination has been tempered with
-    pub fn check_hash(&self) -> Result<String, String> {
-        // destination doesn't exist yet, that's fine
-        if !self.destination.exists() {
-            return Ok("destination does not yet exist. No hash expected.".to_string());
-        }
-        let mut hash = String::from("");
-        if let Ok(lines) = read_lines(&self.hash_file) {
-            if let Ok(stored_hash) = lines.last().unwrap() {
-                hash = stored_hash;
-            };
-        }
-
-        let valid_hash = match hash == calc_directory_hash(&self.destination) {
-            false => return Err("hashes do not match".to_string()),
-            true => hash,
-        };
-        Ok(valid_hash)
-    }
-}
-
-fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
-where
-    P: AsRef<Path>,
-{
-    let file = File::open(filename)?;
-    Ok(io::BufReader::new(file).lines())
-}
-
-fn calc_directory_hash(dir: impl AsRef<Path>) -> String {
-    let mut hash = Blake2s256::new();
-    let directory = dir.as_ref().to_str().unwrap();
-    get_hash_folder(directory, &mut hash, 1, |_| {}).unwrap()
 }
 
 /// Copy files from source to destination recursively.
