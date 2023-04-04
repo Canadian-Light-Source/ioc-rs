@@ -1,0 +1,4 @@
+{% include "header.tera" %}
+< startup.iocsh_{{ IOC }}
+
+{% include "footer.tera" %}

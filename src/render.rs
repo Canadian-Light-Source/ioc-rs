@@ -66,3 +66,35 @@ pub fn render_startup(ioc: &IOC, template_dir: &str) -> std::io::Result<()> {
     );
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use std::path::Path;
+
+    // Note this useful idiom: importing names from outer (for mod tests) scope.
+    use super::*;
+
+    #[test]
+    fn test_render() {
+        let test_ioc = IOC::new(
+            Path::new("./tests/MTEST_IOC01"),
+            Path::new("./tests/tmp/stage/"),
+            Path::new("./tests/tmp"),
+        )
+        .unwrap();
+        let expected = "\
+# ------------------
+# TEST HEADER
+# ------------------
+
+< startup.iocsh_MTEST_IOC01
+
+# ------------------
+# TEST FOOTER
+# ------------------
+
+";
+        let template_dir = "./tests/render_test/templates/*.tera";
+        assert_eq!(render(&test_ioc, template_dir).unwrap(), expected);
+    }
+}
