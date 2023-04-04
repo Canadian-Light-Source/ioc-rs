@@ -7,11 +7,11 @@ use std::{
 use blake2::{Blake2s256, Digest};
 use colored::Colorize;
 use file_hashing::get_hash_folder;
-use log::{debug, info, trace, warn};
+use log::{debug, error, info, trace, warn};
 
 use crate::{
     ioc::IOC,
-    log_macros::{exclaim, tick},
+    log_macros::{cross, exclaim, tick},
 };
 
 /**
@@ -40,7 +40,7 @@ fn get_directory_hash(dir: impl AsRef<Path>) -> String {
 }
 
 /// check whether destination has been tempered with
-pub fn check_hash(ioc: &IOC) -> Result<String, String> {
+pub fn check_hash(ioc: &IOC, force: &bool) -> Result<String, String> {
     // destination doesn't exist yet, that's fine
     if !ioc.destination.exists() {
         return Ok("destination does not yet exist. No hash expected.".to_string());
@@ -54,8 +54,25 @@ pub fn check_hash(ioc: &IOC) -> Result<String, String> {
 
     let valid_hash = match hash == get_directory_hash(&ioc.destination) {
         false => {
-            warn!("{} hash mismatch!", exclaim!());
-            return Err("hash mismatch!".to_string());
+            // warn!("{} hash mismatch!", exclaim!());
+            if *force {
+                warn!(
+                    "{} hash mismatch, overwritten by {}",
+                    exclaim!(),
+                    "--force".yellow()
+                );
+                return Ok(hash);
+            } else {
+                // error!("hash mismatch!");
+                error!(
+                    "{} --> check destination <{:?}> and use `{} {}` to deploy regardless",
+                    cross!(),
+                    &ioc.destination.as_path(),
+                    "ioc install --force".yellow(),
+                    &ioc.name.yellow()
+                );
+                return Err("hash mismatch!".to_string());
+            }
         }
         true => {
             info!("{} valid hash for {} |{}|", tick!(), &ioc.name.blue(), hash);

@@ -40,26 +40,16 @@ pub fn ioc_install(
         info!("----- {} -----", ioc.name.blue().bold());
         trace!("{:?}", ioc);
         // temper check
-        match hash_ioc::check_hash(ioc) {
+        match hash_ioc::check_hash(ioc, force) {
             Ok(_hash) => {}
             Err(e) => {
-                if !force {
-                    error!(
-                        "{} {} --> check destination <{:?}> and use `{} {}` to deploy regardless",
-                        cross!(),
-                        e,
-                        &ioc.destination.as_path(),
-                        "ioc install --force".yellow(),
-                        &ioc.name.yellow()
-                    );
-                    continue;
-                } else {
-                    warn!(
-                        "{} failed hash check, overwritten by {}",
-                        exclaim!(),
-                        "--force".yellow()
-                    );
-                }
+                error!(
+                    "{} {}: aborting deployment of {}",
+                    cross!(),
+                    e,
+                    ioc.name.red().bold()
+                );
+                continue;
             }
         }
         // staging
