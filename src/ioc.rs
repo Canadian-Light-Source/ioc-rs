@@ -137,43 +137,6 @@ fn copy_recursively(
     Ok(())
 }
 
-// fn diff_recursively(
-//     source: impl AsRef<Path>,
-//     destination: impl AsRef<Path>,
-// ) -> std::io::Result<()> {
-//     for entry in fs::read_dir(source)? {
-//         let entry = entry?;
-//         if entry.file_name().into_string().unwrap().starts_with('.') {
-//             continue;
-//         }
-//         let filetype = entry.file_type()?;
-//         if filetype.is_dir() {
-//             if entry.file_name().into_string().unwrap() == "cfg" {
-//                 diff_recursively(entry.path(), destination.as_ref().join(entry.file_name()))?;
-//             } else {
-//                 diff_recursively(entry.path(), destination.as_ref())?; // flatten the structure
-//             }
-//         } else {
-//             let patch = get_patch(destination.as_ref().join(entry.file_name()), entry.path())?;
-//             if patch.lines().count() > 3 {
-//                 info!("===========================================================");
-//                 info!("--- original: {}", entry.path().to_str().unwrap());
-//                 info!(
-//                     "+++ modified: {}",
-//                     destination
-//                         .as_ref()
-//                         .join(entry.file_name())
-//                         .to_str()
-//                         .unwrap()
-//                 );
-//                 info!("DIFF:\n{}", patch);
-//                 info!("===========================================================");
-//             }
-//         }
-//     }
-//     Ok(())
-// }
-
 fn remove_dir_contents<P: AsRef<Path>>(path: P) -> io::Result<()> {
     for entry in fs::read_dir(path)? {
         let entry = entry?;
