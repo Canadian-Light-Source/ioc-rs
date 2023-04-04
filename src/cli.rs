@@ -60,4 +60,9 @@ pub enum Commands {
         #[clap(default_value = "", value_parser, num_args = 1.., value_delimiter = ' ')]
         iocs: Option<Vec<String>>,
     },
+    Stage {
+        /// single IOCs to stage
+        #[clap(default_value = "")]
+        ioc: Option<String>,
+    },
 }
