@@ -143,9 +143,7 @@ fn remove_dir(dir: impl AsRef<Path>) -> std::io::Result<()> {
 
 fn perform_stage_deploy(ioc: &IOC, template_dir: &str, nodiff: &bool) {
     trace!("staging {}", ioc.name.blue().bold());
-    // let template_dir = settings.get::<String>("app.template_directory").unwrap();
     match ioc.stage(template_dir) {
-        // match ioc.stage(conf.template_dir.as_str()) {
         Ok(_) => info!("{} staged {}", tick!(), ioc.name.blue()),
         Err(e) => error!(
             "{} staging of {} failed with: {}",
