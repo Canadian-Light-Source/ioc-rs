@@ -11,8 +11,12 @@ use log::{debug, trace};
 
 use crate::{ioc::IOC, log_macros::tick};
 
+/**
+ * Calculate directory hash from the staging directory.
+ * Save to destination directory / data
+*/
 pub fn hash_ioc(ioc: &IOC) -> std::io::Result<()> {
-    let hash = calc_directory_hash(&ioc.stage);
+    let hash = get_directory_hash(&ioc.stage);
     trace!("hash: {:?}", hash);
     fs::create_dir_all(&ioc.data)?;
     let mut file = File::create(&ioc.hash_file)?;
@@ -25,7 +29,8 @@ pub fn hash_ioc(ioc: &IOC) -> std::io::Result<()> {
     Ok(())
 }
 
-fn calc_directory_hash(dir: impl AsRef<Path>) -> String {
+/// obtain directory hash
+fn get_directory_hash(dir: impl AsRef<Path>) -> String {
     let mut hash = Blake2s256::new();
     let directory = dir.as_ref().to_str().unwrap();
     get_hash_folder(directory, &mut hash, 1, |_| {}).unwrap()
