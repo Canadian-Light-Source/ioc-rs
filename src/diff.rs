@@ -23,7 +23,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_hash_directory() {
+    fn test_diff() {
         let original = Path::new("./tests/diff_test/original");
         let modified = Path::new("./tests/diff_test/modified");
         let expected = "\u{1b}[1m--- original\n+++ modified\n\u{1b}[0m\u{1b}[36m@@ -1 +1 @@\u{1b}[0m\n\u{1b}[31m-this is the original version\n\u{1b}[0m\u{1b}[32m+this is the modified version\n\u{1b}[0m";
