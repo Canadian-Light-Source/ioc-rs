@@ -2,10 +2,11 @@ use std::{env, path::Path};
 
 use colored::Colorize;
 use config::Config;
-use log::{debug, error, info, trace, warn};
+use log::{debug, error, info, trace};
 use std::fs;
 
 use crate::{
+    hash_ioc,
     ioc::IOC,
     log_macros::{cross, exclaim, tick},
 };
@@ -39,28 +40,16 @@ pub fn ioc_install(
         info!("----- {} -----", ioc.name.blue().bold());
         trace!("{:?}", ioc);
         // temper check
-        match ioc.check_hash() {
-            Ok(hash) => {
-                info!("{} valid hash for {} |{}|", tick!(), &ioc.name.blue(), hash);
-            }
+        match hash_ioc::check_hash(ioc, force) {
+            Ok(_hash) => {}
             Err(e) => {
-                if !force {
-                    error!(
-                        "{} {} --> check destination <{:?}> and use `{} {}` to deploy regardless",
-                        cross!(),
-                        e,
-                        &ioc.destination.as_path(),
-                        "ioc install --force".yellow(),
-                        &ioc.name.yellow()
-                    );
-                    continue;
-                } else {
-                    warn!(
-                        "{} failed hash check, overwritten by {}",
-                        exclaim!(),
-                        "--force".yellow()
-                    );
-                }
+                error!(
+                    "{} {}: aborting deployment of {}",
+                    cross!(),
+                    e,
+                    ioc.name.red().bold()
+                );
+                continue;
             }
         }
         // staging
