@@ -6,6 +6,7 @@ use log::{debug, error, info, trace, warn};
 use std::fs;
 
 use crate::{
+    hash_ioc,
     ioc::IOC,
     log_macros::{cross, exclaim, tick},
 };
@@ -39,10 +40,8 @@ pub fn ioc_install(
         info!("----- {} -----", ioc.name.blue().bold());
         trace!("{:?}", ioc);
         // temper check
-        match ioc.check_hash() {
-            Ok(hash) => {
-                info!("{} valid hash for {} |{}|", tick!(), &ioc.name.blue(), hash);
-            }
+        match hash_ioc::check_hash(ioc) {
+            Ok(_hash) => {}
             Err(e) => {
                 if !force {
                     error!(
