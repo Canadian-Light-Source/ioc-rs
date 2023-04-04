@@ -154,7 +154,7 @@ fn diff_recursively(
                 diff_recursively(entry.path(), destination.as_ref())?; // flatten the structure
             }
         } else {
-            let patch = get_patch(entry.path(), destination.as_ref().join(entry.file_name()))?;
+            let patch = get_patch(destination.as_ref().join(entry.file_name()), entry.path())?;
             if patch.lines().count() > 3 {
                 info!("===========================================================");
                 info!("--- original: {}", entry.path().to_str().unwrap());
