@@ -1,3 +1,4 @@
+use std::env;
 use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
@@ -62,6 +63,22 @@ impl IOC {
             }),
             false => Err("Could not find source of IOC."),
         }
+    }
+
+    pub fn from_list(
+        list: &[String],
+        stage_root: impl AsRef<Path>,
+        destination_root: impl AsRef<Path>,
+    ) -> Vec<Self> {
+        debug!("collecting iocs ...");
+        list.iter()
+            .map(|name| {
+                let work_dir = env::current_dir().unwrap().join(name);
+                trace!("working dir: {:?}", work_dir);
+                // TODO: `match` this to create pleasing Error log
+                IOC::new(&work_dir, &stage_root, &destination_root).expect("from_list failed")
+            })
+            .collect()
     }
 
     pub fn stage(&self, template_dir: &str) -> std::io::Result<()> {
