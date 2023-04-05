@@ -28,7 +28,7 @@ fn filter_comments(input: &str) -> String {
         .filter(|&l| !l.starts_with("#-"))
         .for_each(|r| {
             filtered.push_str(r);
-            filtered.push_str("\n")
+            filtered.push('\n')
         });
     filtered
 }
