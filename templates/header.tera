@@ -1,4 +1,4 @@
 # ------------------
 # DEVELOPMENT HEADER
 # ------------------
-# automatically created by `{{ tool }}` v{{ version }} at {{ date }}
+#- automatically created by `{{ tool }}` v{{ version }} at {{ date }}

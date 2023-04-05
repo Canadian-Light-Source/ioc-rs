@@ -9,13 +9,28 @@ fn get_patch<P>(original: P, modified: P) -> io::Result<String>
 where
     P: AsRef<Path>,
 {
-    let org_lines = fs::read_to_string(original).expect("Should have been able to read the file");
-    let mod_lines = fs::read_to_string(modified).expect("Should have been able to read the file");
+    let mut org_lines = fs::read_to_string(original).expect("Failed to read to string:");
+    let mut mod_lines = fs::read_to_string(modified).expect("Failed to read to string:");
+
+    org_lines = filter_comments(&org_lines);
+    mod_lines = filter_comments(&mod_lines);
 
     let patch = create_patch(org_lines.as_str(), mod_lines.as_str());
     let f = PatchFormatter::new().with_color();
     let s = f.fmt_patch(&patch.to_owned()).to_string();
     Ok(s)
+}
+
+fn filter_comments(input: &str) -> String {
+    let mut filtered = String::new();
+    input
+        .lines()
+        .filter(|&l| !l.starts_with("#-"))
+        .for_each(|r| {
+            filtered.push_str(r);
+            filtered.push_str("\n")
+        });
+    filtered
 }
 
 pub fn diff_recursively(
