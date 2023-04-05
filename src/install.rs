@@ -1,8 +1,8 @@
-use std::{env, path::Path};
+use std::path::Path;
 
 use colored::Colorize;
 use config::Config;
-use log::{debug, error, info, trace};
+use log::{error, info, trace};
 use std::fs;
 
 use crate::{
@@ -31,10 +31,7 @@ pub fn ioc_install(
     trace!("  templates:{:?}", template_dir);
     trace!("-----------------------------------------");
 
-    let ioc_list = match iocs {
-        Some(i) => collect_iocs(i, &stage_root, &deploy_root),
-        None => panic!(),
-    };
+    let ioc_list = IOC::from_list(iocs.as_ref().unwrap(), &stage_root, &deploy_root);
     trace!("{} ioc list created", tick!());
 
     for ioc in &ioc_list {
@@ -116,29 +113,6 @@ pub fn ioc_install(
         }
         trace!("------------");
     }
-}
-
-fn collect_iocs(
-    ioc_names: &[String],
-    stage_root: impl AsRef<Path>,
-    destination_root: impl AsRef<Path>,
-) -> Vec<IOC> {
-    let mut iocs: Vec<IOC> = Vec::new();
-    debug!("collecting iocs ...");
-    ioc_names.iter().for_each(|name| {
-        let work_dir = env::current_dir().unwrap().join(name);
-        trace!("working dir: {:?}", work_dir);
-        match IOC::new(&work_dir, &stage_root, &destination_root) {
-            Ok(new_ioc) => iocs.push(new_ioc),
-            Err(e) => error!(
-                "{} IOC::new failed for <{}> with: {}",
-                cross!(),
-                name.red().bold(),
-                e
-            ),
-        };
-    });
-    iocs
 }
 
 fn ioc_cleanup(ioc: &IOC) -> std::io::Result<()> {
