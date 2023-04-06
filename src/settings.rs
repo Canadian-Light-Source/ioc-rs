@@ -30,7 +30,7 @@ impl Settings {
             .unwrap()
             .set_default("filesystem.stage", "./stage")
             .unwrap()
-            .set_default("filesystem.deploy", "./ioc/delpoy")
+            .set_default("filesystem.deploy", "./ioc/deploy")
             .unwrap()
             .set_default("app.templates", "/opt/apps/ioc/templates/*.tera")
             .unwrap()

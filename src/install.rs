@@ -53,7 +53,7 @@ pub fn ioc_install(
         // staging
         trace!("staging {}", ioc.name.blue().bold());
         stage::ioc_stage(&None, Some(ioc.clone()), settings);
-        if ioc.destination.exists() && !nodiff {
+        if ioc.destination.exists() && !*nodiff {
             match ioc.diff_ioc() {
                 Ok(_) => info!("{} diffed {} see output above", tick!(), ioc.name.blue()),
                 Err(e) => error!(

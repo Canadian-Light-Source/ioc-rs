@@ -107,7 +107,7 @@ mod tests {
 
     #[test]
     fn test_stage_ioc() {
-        let settings = Settings::build("tests/config/test.toml").unwrap();
+        let settings = Settings::build("tests/config/test_stage.toml").unwrap();
 
         let test_ioc = IOC::new(
             Path::new("./tests/MTEST_IOC01"),
@@ -123,12 +123,13 @@ mod tests {
 
     #[test]
     fn test_stage_ioc2() {
-        let settings = Settings::build("tests/config/test.toml").unwrap();
+        let settings = Settings::build("tests/config/test_stage.toml").unwrap();
+        let stage_root = settings.get::<String>("filesystem.stage").unwrap();
 
         ioc_stage(&Some("tests/MTEST_IOC01".to_string()), None, &settings);
         // the actual check
         let stage_dir = Path::new("./tests/tmp/stage/MTEST_IOC01");
         assert!(stage_dir.exists());
-        assert!(fs::remove_dir_all(stage_dir).is_ok());
+        assert!(fs::remove_dir_all(stage_root).is_ok());
     }
 }

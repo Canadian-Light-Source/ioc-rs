@@ -33,10 +33,7 @@ fn filter_comments(input: &str) -> String {
     filtered
 }
 
-pub fn diff_recursively(
-    source: impl AsRef<Path>,
-    destination: impl AsRef<Path>,
-) -> std::io::Result<()> {
+pub fn diff_recursively(source: impl AsRef<Path>, destination: impl AsRef<Path>) -> io::Result<()> {
     for entry in fs::read_dir(source)? {
         let entry = entry?;
         if entry.file_name().into_string().unwrap().starts_with('.') {
