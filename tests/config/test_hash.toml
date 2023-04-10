@@ -1,0 +1,8 @@
+debug = false
+
+[filesystem]
+stage = "tests/tmp/hash/"
+deploy = "tests/tmp/deploy/ioc/"
+
+[app]
+template_directory = "templates/**/*.tera"

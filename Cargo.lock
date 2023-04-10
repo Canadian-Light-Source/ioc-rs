@@ -680,7 +680,7 @@ dependencies = [
 
 [[package]]
 name = "ioc"
-version = "0.6.0"
+version = "0.8.2"
 dependencies = [
  "blake2",
  "chrono",

@@ -42,7 +42,7 @@ impl Cli {
 
 #[derive(Subcommand, Debug, Clone)]
 pub enum Commands {
-    /// delpoyment command
+    /// deployment command
     Install {
         /// perform dryrun
         #[arg(short, long, action)]
@@ -59,5 +59,10 @@ pub enum Commands {
         /// list of IOCs to deploy, space separated
         #[clap(default_value = "", value_parser, num_args = 1.., value_delimiter = ' ')]
         iocs: Option<Vec<String>>,
+    },
+    Stage {
+        /// single IOCs to stage
+        #[clap(default_value = "")]
+        ioc: Option<String>,
     },
 }

@@ -1,7 +1,7 @@
 [package]
 name = "ioc"
 description = "install ioc definitions"
-version = "0.7.0"
+version = "0.8.2"
 authors = ["Niko Kivel <niko.kivel@lightsource.ca>"]
 license = "MIT, btc"
 keywords = ["CLS", "deployment", "ioc", "tools"]
