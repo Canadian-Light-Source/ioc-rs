@@ -22,7 +22,9 @@ use cli::{Cli, Commands};
 mod settings;
 use settings::Settings;
 
+mod file_system;
 mod metadata;
+
 use metadata::PackageData;
 
 fn main() {
