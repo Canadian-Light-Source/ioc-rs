@@ -21,7 +21,7 @@ fn render(ioc: &IOC, template_dir: &str) -> Result<String, Error> {
         Ok(t) => t,
         Err(e) => {
             error!("Parsing error(s): {}", e);
-            ::std::process::exit(1);
+            std::process::exit(1);
         }
     };
     trace!("{} tera parser created", tick!());

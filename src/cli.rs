@@ -42,7 +42,7 @@ impl Cli {
 
 #[derive(Subcommand, Debug, Clone)]
 pub enum Commands {
-    /// delpoyment command
+    /// deployment command
     Install {
         /// perform dryrun
         #[arg(short, long, action)]

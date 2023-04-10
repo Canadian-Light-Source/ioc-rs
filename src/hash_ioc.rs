@@ -18,7 +18,7 @@ use crate::{
  * Calculate directory hash from the staging directory.
  * Save to destination directory / data
 */
-pub fn hash_ioc(ioc: &IOC) -> std::io::Result<()> {
+pub fn hash_ioc(ioc: &IOC) -> io::Result<()> {
     let hash = get_directory_hash(&ioc.stage);
     trace!("hash: {:?}", hash);
     fs::create_dir_all(&ioc.data)?;
@@ -54,13 +54,13 @@ pub fn check_hash(ioc: &IOC, force: &bool) -> Result<String, String> {
 
     let valid_hash = match hash == get_directory_hash(&ioc.destination) {
         false => {
-            if *force {
+            return if *force {
                 warn!(
                     "{} hash mismatch, overwritten by {}",
                     exclaim!(),
                     "--force".yellow()
                 );
-                return Ok(hash);
+                Ok(hash)
             } else {
                 error!(
                     "{} --> check destination <{:?}> and use `{} {}` to deploy regardless",
@@ -69,7 +69,7 @@ pub fn check_hash(ioc: &IOC, force: &bool) -> Result<String, String> {
                     "ioc install --force".yellow(),
                     &ioc.name.yellow()
                 );
-                return Err("hash mismatch!".to_string());
+                Err("hash mismatch!".to_string())
             }
         }
         true => {
@@ -90,6 +90,8 @@ where
 
 #[cfg(test)]
 mod tests {
+    use crate::settings::Settings;
+    use crate::stage;
     // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
 
@@ -104,14 +106,21 @@ mod tests {
 
     #[test]
     fn test_hash_ioc() {
+        let settings = Settings::build("tests/config/test_hash.toml").unwrap();
+        let stage_root = settings.get::<String>("filesystem.stage").unwrap();
+        let deploy_root = settings.get::<String>("filesystem.deploy").unwrap();
         let test_ioc = IOC::new(
             Path::new("./tests/MTEST_IOC01"),
-            Path::new("./tests/tmp/stage/"),
-            Path::new("./tests/tmp"),
+            Path::new(&stage_root),
+            Path::new(&deploy_root),
         )
         .unwrap();
+        stage::ioc_stage(&None, Some(test_ioc.clone()), &settings);
+
         let _ = hash_ioc(&test_ioc);
         // the actual check
         assert!(&test_ioc.hash_file.exists());
+        assert!(fs::remove_dir_all(test_ioc.data).is_ok());
+        assert!(fs::remove_dir_all(test_ioc.stage).is_ok());
     }
 }

@@ -10,7 +10,6 @@ use log::{debug, trace};
 use crate::diff;
 use crate::hash_ioc;
 use crate::log_macros::tick;
-use crate::render;
 
 /// IOC structure
 #[derive(Debug, Clone)]
@@ -81,31 +80,31 @@ impl IOC {
             .collect()
     }
 
-    pub fn stage(&self, template_dir: &str) -> std::io::Result<()> {
-        trace!("staging {}", self.name.blue());
-        if self.stage.exists() {
-            remove_dir_contents(&self.stage)?; // prep stage directory
-            trace!("{} {:?} removed", tick!(), &self.stage.as_path());
-        }
-        copy_recursively(&self.source, &self.stage)?;
-        trace!(
-            "{} copied {:?} -> {:?}",
-            tick!(),
-            &self.source.as_path(),
-            &self.stage.as_path()
-        );
-        render::render_startup(self, template_dir)?;
-        debug!("{} staging of {:?} complete.", tick!(), self.name);
-        Ok(())
-    }
+    // pub fn stage(&self, template_dir: &str) -> std::io::Result<()> {
+    //     trace!("staging {}", self.name.blue());
+    //     if self.stage.exists() {
+    //         remove_dir_contents(&self.stage)?; // prep stage directory
+    //         trace!("{} {:?} removed", tick!(), &self.stage.as_path());
+    //     }
+    //     copy_recursively(&self.source, &self.stage)?;
+    //     trace!(
+    //         "{} copied {:?} -> {:?}",
+    //         tick!(),
+    //         &self.source.as_path(),
+    //         &self.stage.as_path()
+    //     );
+    //     render::render_startup(self, template_dir)?;
+    //     debug!("{} staging of {:?} complete.", tick!(), self.name);
+    //     Ok(())
+    // }
 
-    pub fn diff_ioc(&self) -> std::io::Result<()> {
+    pub fn diff_ioc(&self) -> io::Result<()> {
         trace!("diff for {}", self.name.blue());
         diff::diff_recursively(&self.stage, &self.destination)?;
         Ok(())
     }
 
-    pub fn deploy(&self) -> std::io::Result<()> {
+    pub fn deploy(&self) -> io::Result<()> {
         trace!("deploying {}", self.name.blue());
         if self.destination.exists() {
             remove_dir_contents(&self.destination)?; // prep deploy directory
@@ -130,10 +129,7 @@ impl IOC {
 }
 
 /// Copy files from source to destination recursively.
-fn copy_recursively(
-    source: impl AsRef<Path>,
-    destination: impl AsRef<Path>,
-) -> std::io::Result<()> {
+fn copy_recursively(source: impl AsRef<Path>, destination: impl AsRef<Path>) -> io::Result<()> {
     fs::create_dir_all(&destination)?;
     for entry in fs::read_dir(source)? {
         let entry = entry?;
