@@ -1,5 +1,4 @@
-use std::path::Path;
-use std::{env, fs, io};
+use std::{env, io};
 
 use colored::Colorize;
 use config::Config;
