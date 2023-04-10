@@ -6,6 +6,7 @@ use config::Config;
 use log::{debug, error, info, trace};
 
 use crate::{
+    file_system,
     ioc::IOC,
     log_macros::{cross, tick},
     render,
@@ -46,10 +47,10 @@ pub fn ioc_stage(ioc_name: &Option<String>, ioc_struct: Option<IOC>, settings: &
 fn stage(ioc: &IOC, template_dir: &str) -> io::Result<()> {
     trace!("staging {}", ioc.name.blue());
     if ioc.stage.exists() {
-        remove_dir_contents(&ioc.stage)?; // prep stage directory
+        file_system::remove_dir_contents(&ioc.stage)?; // prep stage directory
         trace!("{} {:?} removed", tick!(), &ioc.stage.as_path());
     }
-    copy_recursively(&ioc.source, &ioc.stage)?;
+    file_system::copy_recursively(&ioc.source, &ioc.stage)?;
     trace!(
         "{} copied {:?} -> {:?}",
         tick!(),
@@ -58,43 +59,6 @@ fn stage(ioc: &IOC, template_dir: &str) -> io::Result<()> {
     );
     render::render_startup(ioc, template_dir)?;
     debug!("{} staging of {:?} complete.", tick!(), ioc.name);
-    Ok(())
-}
-
-fn remove_dir_contents<P: AsRef<Path>>(path: P) -> io::Result<()> {
-    for entry in fs::read_dir(path)? {
-        let entry = entry?;
-        let path = entry.path();
-
-        if entry.file_type()?.is_dir() {
-            remove_dir_contents(&path)?;
-            fs::remove_dir(path)?;
-        } else {
-            fs::remove_file(path)?;
-        }
-    }
-    Ok(())
-}
-
-/// Copy files from source to destination recursively.
-fn copy_recursively(source: impl AsRef<Path>, destination: impl AsRef<Path>) -> io::Result<()> {
-    fs::create_dir_all(&destination)?;
-    for entry in fs::read_dir(source)? {
-        let entry = entry?;
-        if entry.file_name().into_string().unwrap().starts_with('.') {
-            continue;
-        }
-        let filetype = entry.file_type()?;
-        if filetype.is_dir() {
-            if entry.file_name().into_string().unwrap() == "cfg" {
-                copy_recursively(entry.path(), destination.as_ref().join(entry.file_name()))?;
-            } else {
-                copy_recursively(entry.path(), destination.as_ref())?; // flatten the structure
-            }
-        } else {
-            fs::copy(entry.path(), destination.as_ref().join(entry.file_name()))?;
-        }
-    }
     Ok(())
 }
 

@@ -1,5 +1,4 @@
 use std::env;
-use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
 
@@ -7,9 +6,7 @@ use std::path::{Path, PathBuf};
 use colored::Colorize;
 use log::{debug, trace};
 
-use crate::diff;
-use crate::hash_ioc;
-use crate::log_macros::tick;
+use crate::{diff, file_system, hash_ioc, log_macros::tick};
 
 /// IOC structure
 #[derive(Debug, Clone)]
@@ -80,24 +77,6 @@ impl IOC {
             .collect()
     }
 
-    // pub fn stage(&self, template_dir: &str) -> std::io::Result<()> {
-    //     trace!("staging {}", self.name.blue());
-    //     if self.stage.exists() {
-    //         remove_dir_contents(&self.stage)?; // prep stage directory
-    //         trace!("{} {:?} removed", tick!(), &self.stage.as_path());
-    //     }
-    //     copy_recursively(&self.source, &self.stage)?;
-    //     trace!(
-    //         "{} copied {:?} -> {:?}",
-    //         tick!(),
-    //         &self.source.as_path(),
-    //         &self.stage.as_path()
-    //     );
-    //     render::render_startup(self, template_dir)?;
-    //     debug!("{} staging of {:?} complete.", tick!(), self.name);
-    //     Ok(())
-    // }
-
     pub fn diff_ioc(&self) -> io::Result<()> {
         trace!("diff for {}", self.name.blue());
         diff::diff_recursively(&self.stage, &self.destination)?;
@@ -107,11 +86,11 @@ impl IOC {
     pub fn deploy(&self) -> io::Result<()> {
         trace!("deploying {}", self.name.blue());
         if self.destination.exists() {
-            remove_dir_contents(&self.destination)?; // prep deploy directory
+            file_system::remove_dir_contents(&self.destination)?; // prep deploy directory
             trace!("{} removed {:?}", tick!(), &self.destination);
         }
         hash_ioc::hash_ioc(self)?;
-        copy_recursively(&self.stage, &self.destination)?;
+        file_system::copy_recursively(&self.stage, &self.destination)?;
         trace!(
             "{} copied {:?} -> {:?}",
             tick!(),
@@ -126,41 +105,4 @@ impl IOC {
         );
         Ok(())
     }
-}
-
-/// Copy files from source to destination recursively.
-fn copy_recursively(source: impl AsRef<Path>, destination: impl AsRef<Path>) -> io::Result<()> {
-    fs::create_dir_all(&destination)?;
-    for entry in fs::read_dir(source)? {
-        let entry = entry?;
-        if entry.file_name().into_string().unwrap().starts_with('.') {
-            continue;
-        }
-        let filetype = entry.file_type()?;
-        if filetype.is_dir() {
-            if entry.file_name().into_string().unwrap() == "cfg" {
-                copy_recursively(entry.path(), destination.as_ref().join(entry.file_name()))?;
-            } else {
-                copy_recursively(entry.path(), destination.as_ref())?; // flatten the structure
-            }
-        } else {
-            fs::copy(entry.path(), destination.as_ref().join(entry.file_name()))?;
-        }
-    }
-    Ok(())
-}
-
-fn remove_dir_contents<P: AsRef<Path>>(path: P) -> io::Result<()> {
-    for entry in fs::read_dir(path)? {
-        let entry = entry?;
-        let path = entry.path();
-
-        if entry.file_type()?.is_dir() {
-            remove_dir_contents(&path)?;
-            fs::remove_dir(path)?;
-        } else {
-            fs::remove_file(path)?;
-        }
-    }
-    Ok(())
 }

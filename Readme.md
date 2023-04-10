@@ -1,7 +1,7 @@
 # ioc
 
 This tool allows you to deploy IOC applications.
-Currently the tool is only available for testing.
+Currently, the tool is only available for testing.
 The deployment will write to `./deploy/ioc/${IOC}`.
 At deployment a hash will be generated and stored in `./deploy/ioc/data/${IOC}/hash`
 
