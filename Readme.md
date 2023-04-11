@@ -14,7 +14,7 @@ MIT or GPLv3 License
 
 ## Configuration
 Default config is mandatory in `/opt/apps/ioc/config/default.{yaml,toml,json}`.
-This config is overridden if a `dev` file is found in `${PWD}/config/`.
+This config is overwritten if a `dev` file is found in `${PWD}/config/`.
 Additionally, the `-c` argument can specify a file.
 
 NOTE: Incremental changes are allowed. The sequence is default -> dev -> argument.
