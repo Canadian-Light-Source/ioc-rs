@@ -12,6 +12,13 @@ MIT or GPLv3 License
 
 - app configuration in `/opt/apps/ioc/config/default.{yaml,toml,json}`
 
+## Configuration
+Default config is mandatory in `/opt/apps/ioc/config/default.{yaml,toml,json}`.
+This config is overridden if a `dev` file is found in `${PWD}/config/`.
+Additionally, the `-c` argument can specify a file.
+
+NOTE: Incremental changes are allowed. The sequence is default -> dev -> argument.
+
 ## `ioc install`
 
 Install the IOC.
@@ -28,8 +35,8 @@ See `ioc install --help` for more information.
 
 #### stage deployment
 1. find source directory
-1. copy source to staging directory
-1. do the startup wrapping via a template
+2. copy source to staging directory
+3. do the startup wrapping via a template
 
 #### deployment
 1. calculate the checksum and write to the destination
@@ -39,7 +46,7 @@ See `ioc install --help` for more information.
 
 - default to PWD if name not specified [implemented]
 - test
-- refactor to move functions to separate mods
+- refactor to move functions to separate mods [implemented]
 - ...
 
 ## flow chart
