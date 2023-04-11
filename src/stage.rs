@@ -1,4 +1,4 @@
-use std::{env, fs, io};
+use std::{env, io};
 
 use colored::Colorize;
 use config::Config;
@@ -64,6 +64,7 @@ fn stage(ioc: &IOC, template_dir: &str) -> io::Result<()> {
 #[cfg(test)]
 mod tests {
     use crate::settings::Settings;
+    use std::fs;
     use std::path::Path;
 
     // Note this useful idiom: importing names from outer (for mod tests) scope.
