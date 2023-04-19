@@ -6,9 +6,9 @@ use log::{debug, error, info, trace};
 
 use crate::{
     file_system,
+    ioc::render,
     ioc::IOC,
     log_macros::{cross, tick},
-    render,
 };
 
 pub fn ioc_stage(ioc_name: &Option<String>, ioc_struct: Option<IOC>, settings: &Config) {

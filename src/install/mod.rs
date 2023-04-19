@@ -6,7 +6,7 @@ use log::{error, info, trace};
 use std::fs;
 
 use crate::{
-    hash_ioc,
+    ioc::hash_ioc,
     ioc::IOC,
     log_macros::{cross, exclaim, tick},
     stage,

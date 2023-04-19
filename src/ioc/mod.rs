@@ -6,7 +6,11 @@ use std::path::{Path, PathBuf};
 use colored::Colorize;
 use log::{debug, trace};
 
-use crate::{diff, file_system, hash_ioc, log_macros::tick};
+use crate::{file_system, log_macros::tick};
+
+mod diff;
+pub mod hash_ioc;
+pub mod render;
 
 /// IOC structure
 #[derive(Debug, Clone)]

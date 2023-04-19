@@ -9,11 +9,8 @@ use simple_logger::SimpleLogger;
 // my mods
 pub mod log_macros;
 
-mod diff;
-mod hash_ioc;
 mod install;
 pub mod ioc;
-mod render;
 mod stage;
 
 pub mod cli;
