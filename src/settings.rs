@@ -37,7 +37,7 @@ impl Settings {
             // .set_default("app.templates", "/opt/apps/ioc/templates/*.tera")
             // .unwrap()
             // Start off by merging in the "default" configuration file
-            .add_source(File::with_name("/opt/apps/ioc/config/default").required(true))
+            .add_source(File::with_name("/opt/apps/ioc/config/default").required(false))
             // local dev configuration
             .add_source(File::with_name("config/dev").required(false))
             // Add in the config file from cli

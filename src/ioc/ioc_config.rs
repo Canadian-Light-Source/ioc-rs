@@ -24,10 +24,8 @@ impl Settings {
         let s = Config::builder()
             .set_default("ioc.user", "control")
             .unwrap()
-            // Start off by merging in the "default" configuration file
-            .add_source(File::with_name("/opt/apps/ioc/config/default").required(true))
             // local dev configuration
-            .add_source(File::with_name(config_file).required(!config_file.is_empty()))
+            .add_source(File::with_name(config_file).required(true))
             .build()?;
         Ok(s)
     }
