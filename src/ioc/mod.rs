@@ -4,12 +4,13 @@ use std::path::{Path, PathBuf};
 
 // logging
 use colored::Colorize;
-use log::{debug, trace};
+use log::{debug, error, trace};
 
-use crate::{file_system, log_macros::tick};
+use crate::{file_system, log_macros::exclaim, log_macros::tick};
 
 mod diff;
 pub mod hash_ioc;
+mod ioc_config;
 pub mod render;
 
 /// IOC structure
@@ -27,12 +28,14 @@ pub struct IOC {
     pub hash_file: PathBuf,
     /// deploy directory for IOC
     pub destination: PathBuf,
+    /// configuration
+    pub config: ioc_config::Settings,
 }
 
 /// IOC structure implementation
 impl IOC {
     /// Creates a new IOC structure
-    /// shold fail if source does not contain at least a 'startup.iocsh'
+    /// should fail if source does not contain at least a 'startup.iocsh'
     // TODO: implement pre-check
     pub fn new(
         // name: &String,
@@ -51,6 +54,20 @@ impl IOC {
         let destination = destination_root.as_ref().join(&name);
         let data = destination_root.as_ref().join("data").join(&name);
         let hash_file = data.join("hash");
+        let config = match ioc_config::Settings::build(
+            source
+                .as_ref()
+                .to_path_buf()
+                .join("config")
+                .to_str()
+                .unwrap(),
+        ) {
+            Ok(s) => s.try_deserialize().unwrap(),
+            Err(e) => {
+                error!("{} {}. IOC config missing!", exclaim!(), e);
+                panic!();
+            }
+        };
         // check source exists
         match source.as_ref().is_dir() {
             true => Ok(IOC {
@@ -60,6 +77,7 @@ impl IOC {
                 data,
                 hash_file,
                 destination,
+                config,
             }),
             false => Err("Could not find source of IOC."),
         }

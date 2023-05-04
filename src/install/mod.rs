@@ -5,6 +5,7 @@ use config::Config;
 use log::{error, info, trace};
 use std::fs;
 
+use crate::shellbox::ioc_shellbox;
 use crate::{
     ioc::hash_ioc,
     ioc::IOC,
@@ -64,6 +65,21 @@ pub fn ioc_install(
                 ),
             }
         }
+
+        //run script
+        //shellbox
+        // TODO: error handler
+        let _ = ioc_shellbox(ioc, settings);
+
+        // match shellbox::update_config(ioc) {
+        //     Ok(_) => info!("{} shellbox config updated.", tick!()),
+        //     Err(e) => error!(
+        //         "{} shellboc config update of {} failed with: {}",
+        //         cross!(),
+        //         ioc.name.red().bold(),
+        //         e
+        //     ),
+        // }
 
         // deployment
         if !dryrun {

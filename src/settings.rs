@@ -7,6 +7,7 @@ use serde_derive::Deserialize;
 pub struct Filesystem {
     pub stage: String,
     pub deploy: String,
+    pub shellbox: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -26,14 +27,15 @@ pub struct Settings {
 impl Settings {
     pub fn build(config_file: &str) -> Result<Config, ConfigError> {
         let s = Config::builder()
-            .set_default("debug", false)
-            .unwrap()
-            .set_default("filesystem.stage", "./stage")
-            .unwrap()
-            .set_default("filesystem.deploy", "./ioc/deploy")
-            .unwrap()
-            .set_default("app.templates", "/opt/apps/ioc/templates/*.tera")
-            .unwrap()
+            // ==> can be removed because the default config is required
+            // .set_default("debug", false)
+            // .unwrap()
+            // .set_default("filesystem.stage", "./stage")
+            // .unwrap()
+            // .set_default("filesystem.deploy", "./ioc/deploy")
+            // .unwrap()
+            // .set_default("app.templates", "/opt/apps/ioc/templates/*.tera")
+            // .unwrap()
             // Start off by merging in the "default" configuration file
             .add_source(File::with_name("/opt/apps/ioc/config/default").required(true))
             // local dev configuration

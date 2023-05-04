@@ -11,12 +11,18 @@ use users::get_current_username;
 
 use crate::{ioc::IOC, log_macros::tick, metadata::PackageData};
 
-fn render(ioc: &IOC, template_dir: &str) -> Result<String, Error> {
-    let user_name = match get_current_username() {
-        Some(uname) => uname,
-        None => "unkown".into(),
-    };
+fn base_context() -> Context {
+    let metadata = PackageData::new();
+    let local: DateTime<Local> = Local::now();
+    let formatted = format!("{}", local.format("%Y-%m-%d %H:%M:%S.%f"));
+    let mut context = Context::new();
+    context.insert("tool", metadata.get_name());
+    context.insert("version", metadata.get_version());
+    context.insert("date", &formatted);
+    context
+}
 
+fn create_parser(template_dir: &str) -> Tera {
     let tera = match Tera::new(template_dir) {
         Ok(t) => t,
         Err(e) => {
@@ -25,17 +31,22 @@ fn render(ioc: &IOC, template_dir: &str) -> Result<String, Error> {
         }
     };
     trace!("{} tera parser created", tick!());
+    tera
+}
 
-    let metadata = PackageData::new();
-    let local: DateTime<Local> = Local::now();
-    let formatted = format!("{}", local.format("%Y-%m-%d %H:%M:%S.%f"));
-    let mut context = Context::new();
-    context.insert("tool", metadata.get_name());
-    context.insert("version", metadata.get_version());
+fn render_startup_script(ioc: &IOC, template_dir: &str) -> Result<String, Error> {
+    let user_name = match get_current_username() {
+        Some(uname) => uname,
+        None => "unkown".into(),
+    };
+
+    let tera = create_parser(template_dir);
+
+    let mut context = base_context();
     context.insert("IOC", &ioc.name);
     context.insert("user", &user_name.as_os_str().to_str());
     context.insert("destination", &ioc.destination);
-    context.insert("date", &formatted);
+    // context.insert("date", &formatted);
     trace!(
         "{} tera context created: {:?}",
         tick!(),
@@ -58,7 +69,7 @@ pub fn render_startup(ioc: &IOC, template_dir: &str) -> std::io::Result<()> {
         &new.as_path()
     );
     let mut file = File::create(old)?;
-    file.write_all(render(ioc, template_dir).unwrap().as_bytes())?;
+    file.write_all(render_startup_script(ioc, template_dir).unwrap().as_bytes())?;
     trace!(
         "{} template rendered and written to {:?}",
         tick!(),
@@ -67,15 +78,45 @@ pub fn render_startup(ioc: &IOC, template_dir: &str) -> std::io::Result<()> {
     Ok(())
 }
 
+fn render_run_script(ioc: &IOC, template_dir: &str) -> Result<String, Error> {
+    let tera = create_parser(template_dir);
+    // not used right now, for future use with network settings, ...
+    // let conf = ioc.clone().config;
+
+    let mut context = base_context();
+    context.insert("IOC", &ioc.name);
+
+    trace!(
+        "{} tera context created: {:?}",
+        tick!(),
+        &context.clone().into_json()
+    );
+
+    trace!("{} tera rendering ...", tick!());
+    tera.render("clsInitScript.tera", &context)
+}
+
+pub fn render_run(ioc: &IOC, template_dir: &str) -> std::io::Result<()> {
+    let run = &ioc.stage.join(format!("run{}", ioc.name));
+    let mut file = File::create(run)?;
+    file.write_all(render_run_script(ioc, template_dir).unwrap().as_bytes())?;
+    trace!(
+        "{} template rendered and written to {:?}",
+        tick!(),
+        &run.as_path()
+    );
+    Ok(())
+}
+
 #[cfg(test)]
-mod tests {
+mod render_tests {
     use std::path::Path;
 
     // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
 
     #[test]
-    fn test_render() {
+    fn startup() {
         let test_ioc = IOC::new(
             Path::new("./tests/MTEST_IOC01"),
             Path::new("./tests/tmp/stage/"),
@@ -94,7 +135,31 @@ mod tests {
 # ------------------
 
 ";
+
         let template_dir = "./tests/render_test/templates/*.tera";
-        assert_eq!(render(&test_ioc, template_dir).unwrap(), expected);
+        assert_eq!(
+            render_startup_script(&test_ioc, template_dir).unwrap(),
+            expected
+        );
+    }
+
+    #[test]
+    fn run() {
+        let test_ioc = IOC::new(
+            Path::new("./tests/MTEST_IOC01"),
+            Path::new("./tests/tmp/stage/"),
+            Path::new("./tests/tmp"),
+        )
+        .unwrap();
+
+        let expected = "\
+MTEST_IOC01
+";
+
+        let template_dir = "./tests/render_test/templates/*.tera";
+        assert_eq!(
+            render_run_script(&test_ioc, template_dir).unwrap(),
+            expected
+        );
     }
 }

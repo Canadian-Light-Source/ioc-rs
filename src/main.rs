@@ -21,6 +21,7 @@ use settings::Settings;
 
 mod file_system;
 mod metadata;
+mod shellbox;
 
 use metadata::PackageData;
 

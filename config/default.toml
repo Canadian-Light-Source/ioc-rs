@@ -5,6 +5,7 @@ debug = false
 [filesystem]
 stage = "stage/"
 deploy = "deploy/ioc/"
+shellbox = "deploy/ioc/hosts/"
 
 [app]
 # can be a glob, e.g. "templates/**/*.tera"

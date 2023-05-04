@@ -2,7 +2,8 @@
     "debug": true,
     "filesystem": {
         "stage": "TEST_stage_dev/",
-        "deploy": "TEST_deploy/ioc_dev/"
+        "deploy": "TEST_deploy/ioc_dev/",
+        "shellbox": "TEST_shellbox/hosts/"
     },
     "app": {
         "template_directory": "/opt/apps/ioc/templates/*.tera"

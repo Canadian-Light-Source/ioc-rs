@@ -1,9 +1,9 @@
 [package]
 name = "ioc"
 description = "install ioc definitions"
-version = "0.8.2"
+version = "0.9.0"
 authors = ["Niko Kivel <niko.kivel@lightsource.ca>"]
-license = "MIT, btc"
+license = "MIT, tbc"
 keywords = ["CLS", "deployment", "ioc", "tools"]
 repository = "https://github.lightsource.ca/epics-iocs/ioc/"
 edition = "2021"
