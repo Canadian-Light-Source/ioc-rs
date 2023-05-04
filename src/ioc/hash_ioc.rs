@@ -110,7 +110,7 @@ mod tests {
         let stage_root = settings.get::<String>("filesystem.stage").unwrap();
         let deploy_root = settings.get::<String>("filesystem.deploy").unwrap();
         let test_ioc = IOC::new(
-            Path::new("./tests/MTEST_IOC01"),
+            Path::new("./tests/UTEST_IOC01"),
             Path::new(&stage_root),
             Path::new(&deploy_root),
         )
