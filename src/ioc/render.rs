@@ -118,7 +118,7 @@ mod render_tests {
     #[test]
     fn startup() {
         let test_ioc = IOC::new(
-            Path::new("./tests/MTEST_IOC01"),
+            Path::new("./tests/UTEST_IOC01"),
             Path::new("./tests/tmp/stage/"),
             Path::new("./tests/tmp"),
         )
@@ -128,7 +128,7 @@ mod render_tests {
 # TEST HEADER
 # ------------------
 
-< startup.iocsh_MTEST_IOC01
+< startup.iocsh_UTEST_IOC01
 
 # ------------------
 # TEST FOOTER
@@ -146,14 +146,14 @@ mod render_tests {
     #[test]
     fn run() {
         let test_ioc = IOC::new(
-            Path::new("./tests/MTEST_IOC01"),
+            Path::new("./tests/UTEST_IOC01"),
             Path::new("./tests/tmp/stage/"),
             Path::new("./tests/tmp"),
         )
         .unwrap();
 
         let expected = "\
-MTEST_IOC01
+UTEST_IOC01
 ";
 
         let template_dir = "./tests/render_test/templates/*.tera";

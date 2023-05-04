@@ -57,14 +57,9 @@ fn stage(ioc: &IOC, template_dir: &str) -> io::Result<()> {
         &ioc.stage.as_path()
     );
     render::render_startup(ioc, template_dir)?;
-    ioc_run_script(ioc, template_dir)?;
-    debug!("{} staging of {:?} complete.", tick!(), ioc.name);
-    Ok(())
-}
-
-fn ioc_run_script(ioc: &IOC, template_dir: &str) -> io::Result<()> {
-    trace!("run_script {}", ioc.name.blue());
     render::render_run(ioc, template_dir)?;
+    // TODO: Add shellbox here?
+    debug!("{} staging of {:?} complete.", tick!(), ioc.name);
     Ok(())
 }
 
@@ -82,7 +77,7 @@ mod tests {
         let settings = Settings::build("tests/config/test_stage.toml").unwrap();
 
         let test_ioc = IOC::new(
-            Path::new("./tests/MTEST_IOC01"),
+            Path::new("./tests/UTEST_IOC01"),
             Path::new("./tests/tmp/stage_test1/"),
             Path::new("./tests/tmp/deploy/ioc/"),
         )
@@ -98,9 +93,9 @@ mod tests {
         let settings = Settings::build("tests/config/test_stage.toml").unwrap();
         let stage_root = settings.get::<String>("filesystem.stage").unwrap();
 
-        ioc_stage(&Some("tests/MTEST_IOC01".to_string()), None, &settings);
+        ioc_stage(&Some("tests/UTEST_IOC01".to_string()), None, &settings);
         // the actual check
-        let stage_dir = Path::new("./tests/tmp/stage/MTEST_IOC01");
+        let stage_dir = Path::new("./tests/tmp/stage/UTEST_IOC01");
         assert!(stage_dir.exists());
         assert!(fs::remove_dir_all(stage_root).is_ok());
     }

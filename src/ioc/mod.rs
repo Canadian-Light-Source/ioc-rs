@@ -65,7 +65,7 @@ impl IOC {
             Ok(s) => s.try_deserialize().unwrap(),
             Err(e) => {
                 error!("{} {}. IOC config missing!", exclaim!(), e);
-                panic!();
+                panic!("{:?}", e);
             }
         };
         // check source exists
