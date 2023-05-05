@@ -6,7 +6,10 @@ use std::path::{Path, PathBuf};
 use colored::Colorize;
 use log::{debug, error, trace};
 
-use crate::{file_system, log_macros::exclaim, log_macros::tick};
+use crate::{
+    file_system,
+    log_macros::{cross, tick},
+};
 
 mod diff;
 pub mod hash_ioc;
@@ -64,7 +67,7 @@ impl IOC {
         ) {
             Ok(s) => s.try_deserialize().unwrap(),
             Err(e) => {
-                error!("{} {}. IOC config missing!", exclaim!(), e);
+                error!("{} fatal error in IOC config: {}", cross!(), e);
                 panic!("{:?}", e);
             }
         };

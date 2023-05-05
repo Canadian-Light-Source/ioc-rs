@@ -1,9 +1,8 @@
+use crate::log_macros::{cross, exclaim};
 use colored::Colorize;
 use config::{Config, ConfigError, File};
-use log::{error, trace, warn};
+use log::{error, warn};
 use serde_derive::Deserialize;
-
-use crate::log_macros::exclaim;
 
 #[derive(Debug, Deserialize, Clone)]
 #[allow(unused)]
@@ -39,6 +38,11 @@ impl Settings {
 
 fn check_hostname(conf: &mut Config) -> Result<String, ConfigError> {
     let mut hostname = conf.get_string("ioc.host").unwrap();
+    if hostname.len() >= 16 {
+        error!("{} hostname has {} characters.", cross!(), hostname.len());
+        let e = ConfigError::Message("Hostname too long.".to_string());
+        return Err(e);
+    }
     if hostname.chars().any(char::is_uppercase) {
         hostname = hostname.to_lowercase();
         warn!(
