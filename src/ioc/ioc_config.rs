@@ -1,5 +1,9 @@
+use colored::Colorize;
 use config::{Config, ConfigError, File};
+use log::{error, trace, warn};
 use serde_derive::Deserialize;
+
+use crate::log_macros::exclaim;
 
 #[derive(Debug, Deserialize, Clone)]
 #[allow(unused)]
@@ -21,12 +25,36 @@ pub struct Settings {
 
 impl Settings {
     pub fn build(config_file: &str) -> Result<Config, ConfigError> {
-        let s = Config::builder()
+        let mut s = Config::builder()
             .set_default("ioc.user", "control")
             .unwrap()
             // local dev configuration
             .add_source(File::with_name(config_file).required(true))
             .build()?;
+        // force hostname to lowercase
+        s = rebuild("ioc.host".to_string(), check_hostname(&mut s)?, s.clone())?;
         Ok(s)
     }
+}
+
+fn check_hostname(conf: &mut Config) -> Result<String, ConfigError> {
+    let mut hostname = conf.get_string("ioc.host").unwrap();
+    if hostname.chars().any(char::is_uppercase) {
+        hostname = hostname.to_lowercase();
+        warn!(
+            "{} IOC hostname was changed to lower case! --> '{}'",
+            exclaim!(),
+            hostname
+        );
+    };
+    Ok(hostname)
+}
+
+fn rebuild(key: String, value: String, config: Config) -> Result<Config, ConfigError> {
+    let s = Config::builder()
+        .add_source(config)
+        .set_override(key, value)
+        .unwrap()
+        .build()?;
+    Ok(s)
 }
