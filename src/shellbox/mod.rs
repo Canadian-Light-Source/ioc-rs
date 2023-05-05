@@ -28,6 +28,16 @@ pub fn ioc_shellbox(ioc: &IOC, settings: &Config) -> std::io::Result<()> {
             let kv = get_kv_pair(cfg_line.clone()).unwrap();
             let port = kv.0;
             let payload = kv.1;
+            if is_duplicate(hm.clone(), &port, &payload) {
+                error!(
+                    "{} shellbox config was {} updated. Please update {:?} manually",
+                    cross!(),
+                    "not".red(),
+                    shellbox_config_file
+                );
+                return Ok(());
+            }
+
             update_hm(&mut hm, port, payload);
 
             let lines = hashmap_to_cfg(hm);
@@ -135,7 +145,11 @@ fn get_kv_pair(line: String) -> Option<(String, Vec<String>)> {
 /// update the hashmap, modify existing entry, or add new
 fn update_hm(hashmap: &mut HashMap<String, Vec<String>>, key: String, payload: Vec<String>) {
     if let Some(existing_payload) = hashmap.get_mut(&key) {
+        if payload == existing_payload.clone() {
+            return; // there is nothing to do here
+        }
         trace!("existing value for {} -> {:?}", key, payload);
+        trace!("existing value for {} -> {:?}", key, existing_payload);
         *existing_payload = existing_payload.clone(); // force clone to update the value
         existing_payload.clear(); // clear the existing values
         existing_payload.extend_from_slice(&payload); // insert new values
@@ -159,4 +173,19 @@ fn hashmap_to_cfg(hashmap: HashMap<String, Vec<String>>) -> Option<String> {
         result += &s;
     }
     Some(result)
+}
+
+fn is_duplicate(hashmap: HashMap<String, Vec<String>>, port: &str, payload: &[String]) -> bool {
+    for (key, value) in hashmap {
+        if (value == payload) && (key != port) {
+            error!(
+                "{} new config for port {} has duplicate payload for existing port {}",
+                cross!(),
+                key.red(),
+                port.yellow()
+            );
+            return true;
+        }
+    }
+    false
 }
