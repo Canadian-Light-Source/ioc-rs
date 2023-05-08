@@ -45,10 +45,7 @@ pub fn ioc_stage(ioc_name: &Option<String>, ioc_struct: Option<IOC>, settings: &
 
 fn stage(ioc: &IOC, template_dir: &str) -> io::Result<()> {
     trace!("staging {}", ioc.name.blue());
-    if ioc.stage.exists() {
-        file_system::remove_dir_contents(&ioc.stage)?; // prep stage directory
-        trace!("{} {:?} removed", tick!(), &ioc.stage.as_path());
-    }
+    prep_stage(ioc)?;
     file_system::copy_recursively(&ioc.source, &ioc.stage)?;
     trace!(
         "{} copied {:?} -> {:?}",
@@ -62,6 +59,14 @@ fn stage(ioc: &IOC, template_dir: &str) -> io::Result<()> {
     Ok(())
 }
 
+fn prep_stage(ioc: &IOC) -> io::Result<()> {
+    if ioc.stage.exists() {
+        file_system::remove_dir_contents(&ioc.stage)?; // prep stage directory
+        trace!("{} {:?} removed", tick!(), &ioc.stage.as_path());
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use crate::settings::Settings;
@@ -70,6 +75,40 @@ mod tests {
 
     // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
+
+    #[test]
+    fn test_permission_denied_prep_stage() {
+        let test_ioc = IOC::new(
+            Path::new("./tests/UTEST_IOC01"),
+            Path::new("./tests/tmp/prep_stage/"),
+            Path::new("./tests/tmp/deploy/ioc/"),
+        )
+        .unwrap();
+        let result = prep_stage(&test_ioc);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_stage_fail_ioc() {
+        let settings = Settings::build("tests/config/test_stage.toml").unwrap();
+        let stage_root = Path::new("./tests/tmp/stage_test_fail/");
+
+        let test_ioc = IOC::new(
+            Path::new("./tests/UTEST_IOC01"),
+            Path::new("./tests/tmp/stage_test_fail/no_write_permission"),
+            Path::new("./tests/tmp/deploy/ioc/"),
+        )
+        .unwrap();
+        // make target readonly --> can't create stage_root --> fail
+        let mut perms = fs::metadata(stage_root).unwrap().permissions();
+        if !perms.readonly() {
+            perms.set_readonly(true);
+            fs::set_permissions(stage_root, perms).unwrap();
+        }
+        ioc_stage(&None, Some(test_ioc.clone()), &settings);
+        // the actual check
+        assert!(!&test_ioc.stage.exists());
+    }
 
     #[test]
     fn test_stage_ioc() {
