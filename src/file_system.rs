@@ -58,6 +58,7 @@ mod tests {
         // check if all files made it
         assert!(empty_file.exists());
         assert!(cfg_file.exists());
+        assert!(nested_file.exists());
         assert!(fs::remove_dir_all(target_dir).is_ok());
     }
 
