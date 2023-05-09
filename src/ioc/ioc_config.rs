@@ -24,8 +24,12 @@ impl Settings {
         let s = Config::builder()
             .set_default("ioc.user", "control")
             .unwrap()
+            .set_default("ioc.port", "0")
+            .unwrap()
+            .set_default("ioc.host", "localhost")
+            .unwrap()
             // local dev configuration
-            .add_source(File::with_name(config_file).required(true))
+            .add_source(File::with_name(config_file).required(false))
             .build()?;
         Ok(s)
     }
