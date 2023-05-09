@@ -91,8 +91,40 @@ where
 mod tests {
     use crate::settings::Settings;
     use crate::stage;
+    use tempfile::tempdir;
     // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
+
+    fn new_test_ioc<P>(ioc_path: P) -> io::Result<IOC>
+    where
+        P: AsRef<Path>,
+    {
+        let temp_dir = tempdir()?;
+        let stage_dir = temp_dir.path().join("stage");
+        let dest_dir = temp_dir.path().join("dest");
+        Ok(IOC::new(ioc_path, stage_dir, dest_dir).unwrap())
+    }
+
+    #[test]
+    fn test_check_hash_no_dest() -> io::Result<()> {
+        let test_ioc = new_test_ioc("./tests/UTEST_IOC01").unwrap();
+        assert!(check_hash(&test_ioc, &false).is_ok());
+        Ok(())
+    }
+
+    #[test]
+    fn test_check_hash_mismatch() -> io::Result<()> {
+        let test_ioc = new_test_ioc("./tests/UTEST_IOC01").unwrap();
+
+        std::fs::create_dir_all(&test_ioc.destination)?;
+        std::fs::write(test_ioc.destination.join("file1.txt"), "hash test")?;
+        std::fs::create_dir_all(&test_ioc.data)?;
+        std::fs::write(test_ioc.data.join("hash"), "c00ffee")?;
+
+        assert!(check_hash(&test_ioc, &false).is_err());
+        assert!(check_hash(&test_ioc, &true).is_ok());
+        Ok(())
+    }
 
     #[test]
     fn test_hash_directory() {
@@ -116,7 +148,9 @@ mod tests {
         .unwrap();
         stage::ioc_stage(&None, Some(test_ioc.clone()), &settings);
 
-        let _ = hash_ioc(&test_ioc);
+        assert!(check_hash(&test_ioc, &true).is_ok());
+
+        assert!(hash_ioc(&test_ioc).is_ok());
         // the actual check
         assert!(&test_ioc.hash_file.exists());
         assert!(fs::remove_dir_all(test_ioc.data).is_ok());
