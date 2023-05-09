@@ -35,8 +35,7 @@ pub fn hash_ioc(ioc: &IOC) -> io::Result<()> {
 /// obtain directory hash
 fn get_directory_hash(dir: impl AsRef<Path>) -> String {
     let mut hash = Blake2s256::new();
-    let directory = dir.as_ref().to_str().unwrap();
-    get_hash_folder(directory, &mut hash, 1, |_| {}).unwrap()
+    get_hash_folder(dir.as_ref(), &mut hash, 1, |_| {}).unwrap()
 }
 
 /// check whether destination has been tempered with
