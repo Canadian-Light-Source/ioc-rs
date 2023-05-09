@@ -77,7 +77,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_permission_denied_prep_stage() {
+    fn test_prep_stage_permission_denied_error() {
         let test_ioc = IOC::new(
             Path::new("./tests/UTEST_IOC01"),
             Path::new("./tests/tmp/prep_stage/"),
@@ -89,8 +89,8 @@ mod tests {
     }
 
     #[test]
-    fn test_stage_fail_ioc() {
-        let settings = Settings::build("tests/config/test_stage.toml").unwrap();
+    fn test_ioc_stage_error() {
+        let settings = Settings::build("./tests/config/test_stage.toml").unwrap();
         let stage_root = Path::new("./tests/tmp/stage_test_fail/");
 
         let test_ioc = IOC::new(
@@ -111,8 +111,8 @@ mod tests {
     }
 
     #[test]
-    fn test_stage_ioc() {
-        let settings = Settings::build("tests/config/test_stage.toml").unwrap();
+    fn test_stage_ioc_struct_success() {
+        let settings = Settings::build("./tests/config/test_stage.toml").unwrap();
 
         let test_ioc = IOC::new(
             Path::new("./tests/UTEST_IOC01"),
@@ -127,8 +127,8 @@ mod tests {
     }
 
     #[test]
-    fn test_stage_ioc2() {
-        let settings = Settings::build("tests/config/test_stage.toml").unwrap();
+    fn test_stage_ioc_name_success() {
+        let settings = Settings::build("./tests/config/test_stage.toml").unwrap();
         let stage_root = settings.get::<String>("filesystem.stage").unwrap();
 
         ioc_stage(&Some("tests/UTEST_IOC01".to_string()), None, &settings);
