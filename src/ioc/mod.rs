@@ -143,6 +143,8 @@ impl IOC {
 mod tests {
     // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
+    use crate::settings::Settings;
+    use crate::stage;
     use tempfile::tempdir;
 
     #[test]
@@ -180,6 +182,23 @@ mod tests {
         iocs.iter()
             .enumerate()
             .for_each(|(n, i)| assert_eq!(i.name, ioc_names[n]));
+        Ok(())
+    }
+
+    #[test]
+    fn test_ioc_deploy_success() -> io::Result<()> {
+        let settings = Settings::build("tests/config/test_deploy.toml").unwrap();
+        let stage_root = settings.get::<String>("filesystem.stage").unwrap();
+        let deploy_root = settings.get::<String>("filesystem.deploy").unwrap();
+        let test_ioc = IOC::new(
+            Path::new("./tests/UTEST_IOC01"),
+            Path::new(&stage_root),
+            Path::new(&deploy_root),
+        )
+        .unwrap();
+        stage::ioc_stage(&None, Some(test_ioc.clone()), &settings);
+
+        assert!(test_ioc.deploy().is_ok());
         Ok(())
     }
 }
