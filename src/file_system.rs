@@ -73,20 +73,20 @@ mod tests {
     }
 
     #[test]
-    fn rm_dir_file() {
-        let empty_file = Path::new("tests/filesystem_test/file/empty.txt");
-        let test_dir = empty_file.parent().unwrap();
-        if !test_dir.exists() {
-            fs::create_dir(test_dir).expect("cannot create test directory");
-        }
-        fs::File::create(empty_file).expect("create failed");
+    fn rm_dir_file() -> io::Result<()> {
+        let temp_dir = tempdir()?;
+        let temp_dir = temp_dir.path();
+
+        let empty_file = temp_dir.join("empty.txt");
+        fs::write(&empty_file, "empty")?;
 
         // assert test file is present
         assert!(empty_file.exists());
         // clear directory
-        assert!(remove_dir_contents(test_dir).is_ok());
+        assert!(remove_dir_contents(temp_dir).is_ok());
         // assert test file is deleted
         assert!(!empty_file.exists());
+        Ok(())
     }
 
     #[test]
