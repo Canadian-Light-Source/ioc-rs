@@ -72,6 +72,7 @@ mod tests {
     // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
 
+    // test proper retrieval of log level
     #[test]
     fn log_level() {
         let mut test_cli = Cli {
@@ -79,6 +80,12 @@ mod tests {
             config_file: None,
             command: None,
         };
+        // fallback to "Error"
+        test_cli.log_level = Some("foobar".to_string());
+        assert_eq!(test_cli.get_level_filter(false), LevelFilter::Error);
+        // case insensitive
+        test_cli.log_level = Some("eRrOr".to_string());
+        assert_eq!(test_cli.get_level_filter(false), LevelFilter::Error);
 
         test_cli.log_level = Some("error".to_string());
         assert_eq!(test_cli.get_level_filter(false), LevelFilter::Error);
