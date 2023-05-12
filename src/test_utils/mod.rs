@@ -1,0 +1,14 @@
+use crate::ioc::IOC;
+use std::io;
+use std::path::Path;
+use tempfile::tempdir;
+
+pub fn new_test_ioc<P>(ioc_path: P) -> io::Result<IOC>
+where
+    P: AsRef<Path>,
+{
+    let temp_dir = tempdir()?;
+    let stage_dir = temp_dir.path().join("stage");
+    let dest_dir = temp_dir.path().join("dest");
+    Ok(IOC::new(ioc_path, stage_dir, dest_dir).unwrap())
+}
