@@ -114,7 +114,7 @@ mod tests {
         assert!(check_hash(&test_ioc, &true).is_ok());
         Ok(())
     }
-    // full path tree exists, bogus hash: (force) -> Ok, (no force) -> Fail
+    // full path tree exists, proper hash: (no force) -> Ok
     #[test]
     fn test_check_hash_match() -> io::Result<()> {
         let test_ioc = new_test_ioc("./tests/UTEST_IOC01").unwrap();
