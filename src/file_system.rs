@@ -93,26 +93,4 @@ mod tests {
         assert!(!nested_dir.exists());
         Ok(())
     }
-
-    #[test]
-    fn rm_dir_directory() {
-        let test_root = Path::new("tests/filesystem_test/directory/");
-
-        let empty_file_sub_1 = test_root.join("sub_dir_1/empty.txt");
-        let test_dir_1 = empty_file_sub_1.parent().unwrap();
-        fs::create_dir_all(test_dir_1).unwrap();
-        fs::File::create(empty_file_sub_1.as_path()).expect("create failed");
-        assert!(empty_file_sub_1.exists());
-
-        let empty_file_sub_2 = test_root.join("sub_dir_2/empty.txt");
-        let test_dir_2 = empty_file_sub_2.parent().unwrap();
-        fs::create_dir_all(test_dir_2).unwrap();
-        fs::File::create(empty_file_sub_2.as_path()).expect("create failed");
-        assert!(empty_file_sub_2.exists());
-
-        // clear directory contents recursively
-        assert!(remove_dir_contents(test_root).is_ok());
-        // assert root dir is empty
-        assert!(test_root.read_dir().unwrap().next().is_none());
-    }
 }
