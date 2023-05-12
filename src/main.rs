@@ -22,6 +22,7 @@ use settings::Settings;
 mod file_system;
 mod metadata;
 mod shellbox;
+mod test_utils;
 
 use metadata::PackageData;
 
