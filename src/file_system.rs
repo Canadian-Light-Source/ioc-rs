@@ -77,6 +77,9 @@ mod tests {
         let temp_dir = tempdir()?;
         let temp_dir = temp_dir.path();
 
+        let nested_dir = temp_dir.join("nested_dir");
+        fs::create_dir_all(&nested_dir)?;
+
         let empty_file = temp_dir.join("empty.txt");
         fs::write(&empty_file, "empty")?;
 
@@ -86,6 +89,8 @@ mod tests {
         assert!(remove_dir_contents(temp_dir).is_ok());
         // assert test file is deleted
         assert!(!empty_file.exists());
+        // assert nested dir is deleted
+        assert!(!nested_dir.exists());
         Ok(())
     }
 
