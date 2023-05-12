@@ -96,6 +96,10 @@ fn render_run_script(ioc: &IOC, template_dir: &str) -> Result<String, Error> {
     tera.render("clsInitScript.tera", &context)
 }
 
+#[deprecated(
+    since = "0.10.0",
+    note = "run scripts are not necessary with `shellbox`"
+)]
 pub fn render_run(ioc: &IOC, template_dir: &str) -> std::io::Result<()> {
     let run = &ioc.stage.join(format!("run{}", ioc.name));
     let mut file = File::create(run)?;
@@ -110,19 +114,13 @@ pub fn render_run(ioc: &IOC, template_dir: &str) -> std::io::Result<()> {
 
 #[cfg(test)]
 mod render_tests {
-    use std::path::Path;
-
+    use crate::test_utils::new_test_ioc;
     // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
 
     #[test]
     fn startup() {
-        let test_ioc = IOC::new(
-            Path::new("./tests/UTEST_IOC01"),
-            Path::new("./tests/tmp/stage/"),
-            Path::new("./tests/tmp"),
-        )
-        .unwrap();
+        let test_ioc = new_test_ioc("./tests/UTEST_IOC01").unwrap();
         let expected = "\
 # ------------------
 # TEST HEADER
@@ -145,12 +143,7 @@ mod render_tests {
 
     #[test]
     fn run() {
-        let test_ioc = IOC::new(
-            Path::new("./tests/UTEST_IOC01"),
-            Path::new("./tests/tmp/stage/"),
-            Path::new("./tests/tmp"),
-        )
-        .unwrap();
+        let test_ioc = new_test_ioc("./tests/UTEST_IOC01").unwrap();
 
         let expected = "\
 UTEST_IOC01

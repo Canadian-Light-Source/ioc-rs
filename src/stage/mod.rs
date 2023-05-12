@@ -54,7 +54,7 @@ fn stage(ioc: &IOC, template_dir: &str) -> io::Result<()> {
         &ioc.stage.as_path()
     );
     render::render_startup(ioc, template_dir)?;
-    render::render_run(ioc, template_dir)?;
+    // render::render_run(ioc, template_dir)?;
     // TODO: Add shellbox here?
     debug!("{} staging of {:?} complete.", tick!(), ioc.name);
     Ok(())
