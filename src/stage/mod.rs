@@ -71,6 +71,7 @@ fn prep_stage(ioc: &IOC) -> io::Result<()> {
 #[cfg(test)]
 mod tests {
     use crate::settings::Settings;
+    use crate::test_utils::new_test_ioc;
     use std::fs;
     use std::path::Path;
 
@@ -78,15 +79,29 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_prep_stage_permission_denied_error() {
-        let test_ioc = IOC::new(
-            Path::new("./tests/UTEST_IOC01"),
-            Path::new("./tests/tmp/prep_stage/"),
-            Path::new("./tests/tmp/deploy/ioc/"),
-        )
-        .unwrap();
-        let result = prep_stage(&test_ioc);
-        assert!(result.is_ok());
+    fn test_prep_stage_success() -> io::Result<()> {
+        let test_ioc = new_test_ioc("./tests/UTEST_IOC01").unwrap();
+        fs::create_dir_all(&test_ioc.stage)?;
+        let test_file = test_ioc.stage.join("file1.txt");
+        fs::write(&test_file, "dummy file")?;
+        assert!(prep_stage(&test_ioc).is_ok());
+        assert!(!test_file.exists());
+        Ok(())
+    }
+
+    #[test]
+    fn test_prep_stage_permission_denied_error() -> io::Result<()> {
+        let test_ioc = new_test_ioc("./tests/UTEST_IOC01").unwrap();
+
+        fs::create_dir_all(&test_ioc.stage)?;
+        fs::write(test_ioc.stage.join("file1.txt"), "dummy file")?;
+        let mut perms = fs::metadata(&test_ioc.stage).unwrap().permissions();
+        if !perms.readonly() {
+            perms.set_readonly(true);
+            fs::set_permissions(&test_ioc.stage, perms).unwrap();
+        }
+        assert!(prep_stage(&test_ioc).is_err());
+        Ok(())
     }
 
     #[test]
