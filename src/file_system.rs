@@ -40,31 +40,40 @@ pub fn copy_recursively(source: impl AsRef<Path>, destination: impl AsRef<Path>)
 
 #[cfg(test)]
 mod tests {
+    use tempfile::tempdir;
     // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
 
     #[test]
-    fn copy_files() {
+    fn copy_files() -> io::Result<()> {
+        let temp_dir = tempdir()?;
+        let source_dir = temp_dir.path().join("source");
+        fs::create_dir_all(source_dir.join("cfg"))?;
+        fs::create_dir_all(source_dir.join("nested_dir"))?;
+        fs::write(source_dir.join("empty.txt"), "file in root")?;
+        fs::write(
+            source_dir.join("nested_dir/nested_file.txt"),
+            "file in nested_dir -> ends up in root",
+        )?;
+        fs::write(source_dir.join("cfg/file_in_cfg_dir.txt"), "file in cfg")?;
 
-        let source_dir = Path::new("tests/filesystem_test/dummy_files/");
-        let target_dir = Path::new("tests/filesystem_test/copy_recursive/");
+        let target_dir = temp_dir.path().join("target");
 
         let empty_file = target_dir.join("empty.txt");
         let nested_file = target_dir.join("nested_file.txt");
         let cfg_file = target_dir.join("cfg/file_in_cfg_dir.txt");
 
-        copy_recursively(source_dir, target_dir).unwrap();
+        copy_recursively(source_dir, &target_dir).unwrap();
 
         // check if all files made it
         assert!(empty_file.exists());
         assert!(cfg_file.exists());
         assert!(nested_file.exists());
-        assert!(fs::remove_dir_all(target_dir).is_ok());
+        Ok(())
     }
 
     #[test]
     fn rm_dir_file() {
-
         let empty_file = Path::new("tests/filesystem_test/file/empty.txt");
         let test_dir = empty_file.parent().unwrap();
         if !test_dir.exists() {
@@ -82,7 +91,6 @@ mod tests {
 
     #[test]
     fn rm_dir_directory() {
-
         let test_root = Path::new("tests/filesystem_test/directory/");
 
         let empty_file_sub_1 = test_root.join("sub_dir_1/empty.txt");
