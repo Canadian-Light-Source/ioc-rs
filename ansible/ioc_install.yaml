@@ -46,3 +46,21 @@
       mode: '0644'
     with_fileglob:
       - "{{ playbook_dir }}/../templates/*.tera"
+
+  - name: "add to PATH, bash"
+    template:
+      src: ioc_tool.sh.jinja2
+      dest: /etc/profile.d/ioc_tool.sh
+      owner: root
+      group: root
+      mode: 0644
+    become: true
+
+  - name: "add to PATH, tcsh"
+    template:
+      src: ioc_tool.csh.jinja2
+      dest: /etc/profile.d/ioc_tool.csh
+      owner: root
+      group: root
+      mode: 0644
+    become: true
