@@ -3,7 +3,7 @@
 # mandatory:
 # set this to the name of the IOC the app runs on
 ## IOCNAME
-host = "hostname_of_ioc-host"
+host = "iocHost"
 # set this to the network procServ will allow user control from
 ## PORTNO
 port = "12345"
@@ -15,8 +15,8 @@ port = "12345"
 #    base_dir = "/tmp"
 ## DAEMON: default '${IOC}'
 #    name = "MTEST-NIKO30001"
-## RUNSCRIPT: default 'run${IOC}'
-#    command = "runMTEST-NIKO30001"
+## COMMAND: default 'iocsh -n ${IOC}'
+#    command = "iocsh -3 -r iocStats"
 ## PROCSERV_OPTS
 #    procserv_opts = ""
 ## NETWORK

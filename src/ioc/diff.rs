@@ -9,8 +9,9 @@ fn get_patch<P>(original: P, modified: P) -> io::Result<String>
 where
     P: AsRef<Path>,
 {
-    let mut org_lines = fs::read_to_string(original).expect("Failed to read to string:");
-    let mut mod_lines = fs::read_to_string(modified).expect("Failed to read to string:");
+    // let mut org_lines = fs::read_to_string(original).expect("Failed to read to string:");
+    let mut org_lines = fs::read_to_string(original)?;
+    let mut mod_lines = fs::read_to_string(modified)?;
 
     org_lines = filter_comments(&org_lines);
     mod_lines = filter_comments(&mod_lines);

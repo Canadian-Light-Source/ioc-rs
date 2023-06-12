@@ -28,6 +28,16 @@ pub fn ioc_shellbox(ioc: &IOC, settings: &Config) -> std::io::Result<()> {
             let kv = get_kv_pair(cfg_line.clone()).unwrap();
             let port = kv.0;
             let payload = kv.1;
+            if is_duplicate(hm.clone(), &port, &payload) {
+                error!(
+                    "{} shellbox config was {} updated. Please update {:?} manually",
+                    cross!(),
+                    "not".red(),
+                    shellbox_config_file
+                );
+                return Ok(());
+            }
+
             update_hm(&mut hm, port, payload);
 
             let lines = hashmap_to_cfg(hm);
@@ -50,13 +60,9 @@ pub fn ioc_shellbox(ioc: &IOC, settings: &Config) -> std::io::Result<()> {
     Ok(())
 }
 
+// template for comma separated shellbox config
 static SHELLBOX_TEMPLATE: &str =
     "{{ port }},{{ user }},{{ base_dir }},{{ command }},{{ procserv_opts }}";
-
-// #- shellbox ===========================================================================================================
-// #- automatically created by `{{ tool }}` v{{ version }} at {{ date }}
-// #- {{ port }} {{ user }} {{ base_dir }} {{ command }} {{ args | default(value="") }}
-// #- shellbox ===========================================================================================================
 
 fn render_shellbox_line(ioc: &IOC) -> Result<String, Error> {
     let conf = ioc.clone().config;
@@ -68,6 +74,15 @@ fn render_shellbox_line(ioc: &IOC) -> Result<String, Error> {
         }
         None => ioc.destination.to_str().unwrap().to_string(),
     };
+
+    let command = match conf.ioc.command {
+        Some(opts) => {
+            trace!("command: {}", opts);
+            opts
+        }
+        None => format!("iocsh -n {}", ioc.name),
+    };
+
     let procserv_opts = match conf.ioc.procserv_opts {
         Some(opts) => {
             trace!("procServ opts: {}", opts);
@@ -85,13 +100,7 @@ fn render_shellbox_line(ioc: &IOC) -> Result<String, Error> {
     context.insert("port", &conf.ioc.port);
     context.insert("user", &conf.ioc.user); // default handled in struct
     context.insert("base_dir", &base_dir);
-    context.insert(
-        "command",
-        &ioc.destination
-            .join(format!("run{}", ioc.name))
-            .to_str()
-            .unwrap(),
-    );
+    context.insert("command", &command);
     context.insert("procserv_opts", &procserv_opts);
 
     tera.render("sb_line", &context)
@@ -135,7 +144,11 @@ fn get_kv_pair(line: String) -> Option<(String, Vec<String>)> {
 /// update the hashmap, modify existing entry, or add new
 fn update_hm(hashmap: &mut HashMap<String, Vec<String>>, key: String, payload: Vec<String>) {
     if let Some(existing_payload) = hashmap.get_mut(&key) {
+        if payload == existing_payload.clone() {
+            return; // there is nothing to do here
+        }
         trace!("existing value for {} -> {:?}", key, payload);
+        trace!("existing value for {} -> {:?}", key, existing_payload);
         *existing_payload = existing_payload.clone(); // force clone to update the value
         existing_payload.clear(); // clear the existing values
         existing_payload.extend_from_slice(&payload); // insert new values
@@ -159,4 +172,19 @@ fn hashmap_to_cfg(hashmap: HashMap<String, Vec<String>>) -> Option<String> {
         result += &s;
     }
     Some(result)
+}
+
+fn is_duplicate(hashmap: HashMap<String, Vec<String>>, port: &str, payload: &[String]) -> bool {
+    for (key, value) in hashmap {
+        if (value == payload) && (key != port) {
+            error!(
+                "{} new config for port {} has duplicate payload for existing port {}",
+                cross!(),
+                key.red(),
+                port.yellow()
+            );
+            return true;
+        }
+    }
+    false
 }
