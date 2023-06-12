@@ -3,7 +3,7 @@
 # mandatory:
 # set this to the name of the IOC the app runs on
 ## IOCNAME
-host = "hostname_of_ioc-host"
+host = "iocHost"
 # set this to the network procServ will allow user control from
 ## PORTNO
 port = "12345"
