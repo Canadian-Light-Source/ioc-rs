@@ -60,13 +60,9 @@ pub fn ioc_shellbox(ioc: &IOC, settings: &Config) -> std::io::Result<()> {
     Ok(())
 }
 
+// template for comma separated shellbox config
 static SHELLBOX_TEMPLATE: &str =
     "{{ port }},{{ user }},{{ base_dir }},{{ command }},{{ procserv_opts }}";
-
-// #- shellbox ===========================================================================================================
-// #- automatically created by `{{ tool }}` v{{ version }} at {{ date }}
-// #- {{ port }} {{ user }} {{ base_dir }} {{ command }} {{ args | default(value="") }}
-// #- shellbox ===========================================================================================================
 
 fn render_shellbox_line(ioc: &IOC) -> Result<String, Error> {
     let conf = ioc.clone().config;
@@ -78,6 +74,15 @@ fn render_shellbox_line(ioc: &IOC) -> Result<String, Error> {
         }
         None => ioc.destination.to_str().unwrap().to_string(),
     };
+
+    let command = match conf.ioc.command {
+        Some(opts) => {
+            trace!("command: {}", opts);
+            opts
+        }
+        None => format!("iocsh -n {}", ioc.name),
+    };
+
     let procserv_opts = match conf.ioc.procserv_opts {
         Some(opts) => {
             trace!("procServ opts: {}", opts);
@@ -95,13 +100,7 @@ fn render_shellbox_line(ioc: &IOC) -> Result<String, Error> {
     context.insert("port", &conf.ioc.port);
     context.insert("user", &conf.ioc.user); // default handled in struct
     context.insert("base_dir", &base_dir);
-    context.insert(
-        "command",
-        &ioc.destination
-            .join(format!("run{}", ioc.name))
-            .to_str()
-            .unwrap(),
-    );
+    context.insert("command", &command);
     context.insert("procserv_opts", &procserv_opts);
 
     tera.render("sb_line", &context)
