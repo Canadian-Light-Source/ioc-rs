@@ -1,0 +1,15 @@
+all:
+  hosts:
+    opi2031-004:
+  children:
+    iocs:
+      hosts:
+        ioc1606-023:
+        ioc1607-009:
+    ioc-hosts:
+      children:
+        Alma8-x86_64:
+          vars:
+            target_arch: Alma8-x86_64
+          hosts:
+            vioc2400-112:

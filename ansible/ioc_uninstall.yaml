@@ -1,0 +1,22 @@
+---
+- name: uninstall ioc-tool
+  hosts: ioc-hosts
+  become: true
+  vars:
+    ansible_remote_tmp: /tmp
+
+  tasks:
+  - name: Recursively remove /opt/apps/ioc
+    ansible.builtin.file:
+      path: /opt/apps/ioc
+      state: absent
+
+  - name: Remove /etc/profile.d/ioc_tool.sh
+    ansible.builtin.file:
+      path: /etc/profile.d/ioc_tool.sh
+      state: absent
+
+  - name: Remove /etc/profile.d/ioc_tool.csh
+    ansible.builtin.file:
+      path: /etc/profile.d/ioc_tool.csh
+      state: absent

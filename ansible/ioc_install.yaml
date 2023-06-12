@@ -1,0 +1,66 @@
+---
+- name: install ioc-tool
+  hosts: ioc-hosts
+  become: true
+  vars:
+    ansible_remote_tmp: /tmp
+
+  tasks:
+  - name: create directory /opt/apps/ioc/config
+    ansible.builtin.file:
+      path: /opt/apps/ioc/config
+      state: directory
+
+  - name: copy default config
+    ansible.builtin.copy:
+      src: "{{ playbook_dir }}/../config/default.toml"
+      dest: /opt/apps/ioc/config/default.toml
+      owner: root
+      group: root
+      mode: '0644'
+
+  - name: create directory /opt/apps/ioc/bin
+    ansible.builtin.file:
+      path: /opt/apps/ioc/bin
+      state: directory
+
+  - name: copy ioc-tool
+    ansible.builtin.copy:
+      src: "{{ playbook_dir }}/../target/x86_64-unknown-linux-musl/release/ioc"
+      dest: /opt/apps/ioc/bin/ioc
+      owner: root
+      group: root
+      mode: '0755'
+
+  - name: create directory /opt/apps/ioc/templates
+    ansible.builtin.file:
+      path: /opt/apps/ioc/templates
+      state: directory
+
+  - name: copy templates
+    ansible.builtin.copy:
+      src: "{{ item }}"
+      dest: /opt/apps/ioc/templates
+      owner: root
+      group: root
+      mode: '0644'
+    with_fileglob:
+      - "{{ playbook_dir }}/../templates/*.tera"
+
+  - name: "add to PATH, bash"
+    template:
+      src: ioc_tool.sh.jinja2
+      dest: /etc/profile.d/ioc_tool.sh
+      owner: root
+      group: root
+      mode: 0644
+    become: true
+
+  - name: "add to PATH, tcsh"
+    template:
+      src: ioc_tool.csh.jinja2
+      dest: /etc/profile.d/ioc_tool.csh
+      owner: root
+      group: root
+      mode: 0644
+    become: true
