@@ -19,15 +19,15 @@
       group: root
       mode: '0644'
 
-  - name: create directory /opt/apps/ioc/config
+  - name: create directory /opt/apps/ioc/bin
     ansible.builtin.file:
-      path: /opt/apps/ioc/bin/{{ target_arch }}
+      path: /opt/apps/ioc/bin
       state: directory
 
   - name: copy ioc-tool
     ansible.builtin.copy:
       src: "{{ playbook_dir }}/../target/x86_64-unknown-linux-musl/release/ioc"
-      dest: /opt/apps/ioc/bin/{{ target_arch }}/ioc
+      dest: /opt/apps/ioc/bin/ioc
       owner: root
       group: root
       mode: '0755'
