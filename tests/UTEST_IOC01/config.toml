@@ -15,8 +15,8 @@ port = "12345"
 #    base_dir = "/tmp"
 ## DAEMON: default '${IOC}'
 #    name = "MTEST-NIKO30001"
-## RUNSCRIPT: default 'run${IOC}'
-#    command = "runMTEST-NIKO30001"
+## COMMAND: default 'iocsh -n ${IOC}'
+#    command = "iocsh -3 -r iocStats"
 ## PROCSERV_OPTS
 #    procserv_opts = ""
 ## NETWORK

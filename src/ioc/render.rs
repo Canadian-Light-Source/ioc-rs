@@ -78,36 +78,6 @@ pub fn render_startup(ioc: &IOC, template_dir: &str) -> std::io::Result<()> {
     Ok(())
 }
 
-fn render_run_script(ioc: &IOC, template_dir: &str) -> Result<String, Error> {
-    let tera = create_parser(template_dir);
-    // not used right now, for future use with network settings, ...
-    // let conf = ioc.clone().config;
-
-    let mut context = base_context();
-    context.insert("IOC", &ioc.name);
-
-    trace!(
-        "{} tera context created: {:?}",
-        tick!(),
-        &context.clone().into_json()
-    );
-
-    trace!("{} tera rendering ...", tick!());
-    tera.render("clsInitScript.tera", &context)
-}
-
-pub fn render_run(ioc: &IOC, template_dir: &str) -> std::io::Result<()> {
-    let run = &ioc.stage.join(format!("run{}", ioc.name));
-    let mut file = File::create(run)?;
-    file.write_all(render_run_script(ioc, template_dir).unwrap().as_bytes())?;
-    trace!(
-        "{} template rendered and written to {:?}",
-        tick!(),
-        &run.as_path()
-    );
-    Ok(())
-}
-
 #[cfg(test)]
 mod render_tests {
     use std::path::Path;
@@ -139,26 +109,6 @@ mod render_tests {
         let template_dir = "./tests/render_test/templates/*.tera";
         assert_eq!(
             render_startup_script(&test_ioc, template_dir).unwrap(),
-            expected
-        );
-    }
-
-    #[test]
-    fn run() {
-        let test_ioc = IOC::new(
-            Path::new("./tests/UTEST_IOC01"),
-            Path::new("./tests/tmp/stage/"),
-            Path::new("./tests/tmp"),
-        )
-        .unwrap();
-
-        let expected = "\
-UTEST_IOC01
-";
-
-        let template_dir = "./tests/render_test/templates/*.tera";
-        assert_eq!(
-            render_run_script(&test_ioc, template_dir).unwrap(),
             expected
         );
     }
