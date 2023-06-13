@@ -2,7 +2,7 @@ use std::path::Path;
 
 use colored::Colorize;
 use config::Config;
-use log::{error, info, trace};
+use log::{debug, error, info, trace};
 use std::fs;
 
 use crate::shellbox::ioc_shellbox;
@@ -20,8 +20,10 @@ pub fn ioc_install(
     dryrun: &bool,
     retain: &bool,
     nodiff: &bool,
+    all: &bool,
     force: &bool,
 ) {
+    let ioc_list = check_ioc_list(iocs, *all);
     let stage_root = settings.get::<String>("filesystem.stage").unwrap();
     let deploy_root = settings.get::<String>("filesystem.deploy").unwrap();
     let template_dir = settings.get::<String>("app.template_directory").unwrap();
@@ -32,7 +34,7 @@ pub fn ioc_install(
     trace!("  templates:{:?}", template_dir);
     trace!("-----------------------------------------");
 
-    let ioc_list = IOC::from_list(iocs.as_ref().unwrap(), &stage_root, &deploy_root);
+    let ioc_list = IOC::from_list(ioc_list, &stage_root, &deploy_root);
     trace!("{} ioc list created", tick!());
 
     for ioc in &ioc_list {
@@ -66,20 +68,8 @@ pub fn ioc_install(
             }
         }
 
-        //run script
-        //shellbox
         // TODO: error handler
         let _ = ioc_shellbox(ioc, settings);
-
-        // match shellbox::update_config(ioc) {
-        //     Ok(_) => info!("{} shellbox config updated.", tick!()),
-        //     Err(e) => error!(
-        //         "{} shellboc config update of {} failed with: {}",
-        //         cross!(),
-        //         ioc.name.red().bold(),
-        //         e
-        //     ),
-        // }
 
         // deployment
         if !dryrun {
@@ -128,6 +118,31 @@ pub fn ioc_install(
             }
         }
         trace!("------------");
+    }
+}
+
+fn check_ioc_list(list: &Option<Vec<String>>, all: bool) -> &Vec<String> {
+    match list {
+        Some(_l) if all => {
+            error!(
+                "{} {} is exclusive to empty list of IOCs.",
+                cross!(),
+                "--all".bold().yellow()
+            );
+            panic!("--all is exclusive to empty list of IOCs")
+        }
+        Some(l) if !l.is_empty() => l,
+        None => {
+            if !all {
+                error!("{} empty list iof IOCs, consider --all", cross!());
+                panic!("empty list of IOCs")
+            } else {
+                debug!("{} {} selected", exclaim!(), "--all".bold().yellow());
+                error!("{} --all not implemented yet, sorry.", cross!());
+                panic!("--all not implemented yet.")
+            };
+        } // check if `all` --> get list from filesystem
+        _ => panic!(),
     }
 }
 
