@@ -1,12 +1,10 @@
 use std::collections::HashSet;
-use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
 
 use colored::Colorize;
 use config::Config;
+use glob::glob;
 use log::{debug, error, info, trace};
-use std::io::Error;
-use std::str::FromStr;
 use std::{fs, io};
 
 use crate::shellbox::ioc_shellbox;
@@ -16,9 +14,6 @@ use crate::{
     log_macros::{cross, exclaim, tick},
     stage,
 };
-
-use glob::glob;
-use glob::GlobError;
 
 // TODO: move to function
 pub fn ioc_install(
@@ -130,8 +125,7 @@ pub fn ioc_install(
 
 fn check_ioc_list(list: &Option<Vec<String>>, all: bool) -> Vec<String> {
     match list {
-        Some(l) if all => {
-            filter_duplicates(l.clone());
+        Some(_l) if all => {
             error!(
                 "{} {} is exclusive to empty list of IOCs.",
                 cross!(),
@@ -152,13 +146,6 @@ fn check_ioc_list(list: &Option<Vec<String>>, all: bool) -> Vec<String> {
         } // check if `all` --> get list from filesystem
         _ => panic!(),
     }
-}
-
-/// takes a Vec of Strings
-/// the string can be a glob
-/// ["MTEST_NIKO01","MTEST_NIKO02","MTEST*","**","../ioc/MTEST*"] should be handled properly!
-fn list_to_vec() -> Vec<PathBuf> {
-    vec![PathBuf::new()]
 }
 
 fn filter_duplicates(paths: Vec<String>) -> io::Result<Vec<String>> {
