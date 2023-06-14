@@ -25,7 +25,7 @@ pub fn ioc_install(
     all: &bool,
     force: &bool,
 ) {
-    let ioc_list = check_ioc_list(iocs, *all);
+    let unique_iocs = check_ioc_list(iocs, *all);
     let stage_root = settings.get::<String>("filesystem.stage").unwrap();
     let deploy_root = settings.get::<String>("filesystem.deploy").unwrap();
     let template_dir = settings.get::<String>("app.template_directory").unwrap();
@@ -36,7 +36,7 @@ pub fn ioc_install(
     trace!("  templates:{:?}", template_dir);
     trace!("-----------------------------------------");
 
-    let ioc_list = IOC::from_list(&ioc_list, &stage_root, &deploy_root);
+    let ioc_list = IOC::from_list(&unique_iocs, &stage_root, &deploy_root);
     trace!("{} ioc list created", tick!());
 
     for ioc in &ioc_list {
@@ -133,18 +133,19 @@ fn check_ioc_list(list: &Option<Vec<String>>, all: bool) -> Vec<String> {
             );
             panic!("--all is exclusive to empty list of IOCs")
         }
-        Some(l) if !l.is_empty() => filter_duplicates(l.clone()).unwrap(),
+        Some(l) if !l.is_empty() => {
+            filter_duplicates(l.clone()).expect("unable to filter duplicates!")
+        }
         None => {
             if !all {
                 error!("{} empty list iof IOCs, consider --all", cross!());
                 panic!("empty list of IOCs")
             } else {
                 debug!("{} {} selected", exclaim!(), "--all".bold().yellow());
-                error!("{} --all not implemented yet, sorry.", cross!());
-                panic!("--all not implemented yet.")
-            };
-        } // check if `all` --> get list from filesystem
-        _ => panic!(),
+                filter_duplicates(vec!["*".to_string()]).expect("unable to filter duplicates!")
+            }
+        }
+        Some(_) => panic!(),
     }
 }
 
@@ -175,14 +176,14 @@ fn filter_duplicates(paths: Vec<String>) -> io::Result<Vec<String>> {
     Ok(result)
 }
 
-fn ioc_cleanup(ioc: &IOC) -> std::io::Result<()> {
+fn ioc_cleanup(ioc: &IOC) -> io::Result<()> {
     trace!("cleaning up staging directory for {}", &ioc.name);
     fs::remove_dir_all(&ioc.stage)?;
     info!("{} cleaning up: removed {:?}", tick!(), &ioc.stage);
     Ok(())
 }
 
-fn remove_dir(dir: impl AsRef<Path>) -> std::io::Result<()> {
+fn remove_dir(dir: impl AsRef<Path>) -> io::Result<()> {
     trace!("removing directory {}", dir.as_ref().to_str().unwrap());
     fs::remove_dir_all(dir)?;
     Ok(())
