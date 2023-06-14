@@ -20,47 +20,35 @@ pub fn ioc_shellbox(ioc: &IOC, settings: &Config) -> std::io::Result<()> {
 
     let cfg_line = render_shellbox_line(ioc).unwrap();
 
-    match shellbox_config_file.exists() {
-        true => {
-            trace!("pre-existing config file");
-            let mut hm = read_cfg(&shellbox_config_file);
+    let mut hm = read_cfg(&shellbox_config_file);
+    let (port, payload) = get_kv_pair(cfg_line.clone());
+    if is_duplicate(&hm, &port, &payload) {
+        error!(
+            "{} {}: identical IOC entry detected on a different port!",
+            cross!(),
+            ioc.name.red(),
+        );
+        error!(
+            "{} shellbox config was {} updated. Please update {:?} manually",
+            cross!(),
+            "not".red(),
+            shellbox_config_file
+        );
+        return Ok(());
+    }
+    update_hm(&mut hm, port, payload);
 
-            let kv = get_kv_pair(cfg_line.clone());
-            let port = kv.0;
-            let payload = kv.1;
-            // if is_duplicate(hm.clone(), &port, &payload) {
-            if is_duplicate(&hm, &port, &payload) {
-                error!(
-                    "{} {}: identical IOC entry detected on a different port!",
-                    cross!(),
-                    ioc.name.red(),
-                );
-                error!(
-                    "{} shellbox config was {} updated. Please update {:?} manually",
-                    cross!(),
-                    "not".red(),
-                    shellbox_config_file
-                );
-                return Ok(());
-            }
-
-            update_hm(&mut hm, port, payload);
-
-            let lines = hashmap_to_cfg(hm);
-
-            let mut file = File::create(&shellbox_config_file)?;
-            if let Some(string) = lines {
-                file.write_all(string.as_bytes())?
-            }
-        }
-        false => {
-            warn!("create shellbox config");
-            let root = Path::new(&shellbox_root).join(&ioc.config.ioc.host);
-            fs::create_dir_all(root)?;
-            let mut file = File::create(shellbox_config_file)?;
-            file.write_all(cfg_line.as_bytes())?;
-        }
+    let content = match hashmap_to_cfg(hm) {
+        Some(lines) => lines,
+        None => cfg_line,
     };
+
+    // write to file
+    let root = Path::new(&shellbox_root).join(&ioc.config.ioc.host);
+    fs::create_dir_all(root)?;
+    let mut file = File::create(&shellbox_config_file)?;
+    file.write_all(content.as_bytes())?;
+
     info!("{} shellbox config updated.", tick!());
 
     Ok(())
