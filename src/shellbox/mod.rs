@@ -28,7 +28,13 @@ pub fn ioc_shellbox(ioc: &IOC, settings: &Config) -> std::io::Result<()> {
             let kv = get_kv_pair(cfg_line.clone());
             let port = kv.0;
             let payload = kv.1;
-            if is_duplicate(hm.clone(), &port, &payload) {
+            // if is_duplicate(hm.clone(), &port, &payload) {
+            if is_duplicate(&hm, &port, &payload) {
+                error!(
+                    "{} {}: identical IOC entry detected on a different port!",
+                    cross!(),
+                    ioc.name.red(),
+                );
                 error!(
                     "{} shellbox config was {} updated. Please update {:?} manually",
                     cross!(),
@@ -191,17 +197,8 @@ fn hashmap_to_cfg(hashmap: HashMap<String, Vec<String>>) -> Option<String> {
     Some(result)
 }
 
-fn is_duplicate(hashmap: HashMap<String, Vec<String>>, port: &str, payload: &[String]) -> bool {
-    for (key, value) in hashmap {
-        if (value == payload) && (key != port) {
-            error!(
-                "{} new config for port {} has duplicate payload for existing port {}",
-                cross!(),
-                key.red(),
-                port.yellow()
-            );
-            return true;
-        }
-    }
-    false
+fn is_duplicate(hashmap: &HashMap<String, Vec<String>>, port: &str, payload: &[String]) -> bool {
+    hashmap
+        .iter()
+        .any(|(key, value)| (value == payload) && (key != port))
 }
