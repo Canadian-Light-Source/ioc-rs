@@ -47,17 +47,26 @@ pub enum Commands {
         /// perform dryrun
         #[arg(short, long, action)]
         dryrun: bool,
+
         /// retain staging data
         #[arg(long, action)]
         retain: bool,
+
         /// do not show the diff
         #[arg(long, action)]
         nodiff: bool,
+
+        /// install _all_ IOCs in PWD
+        #[arg(short, long, action)]
+        all: bool,
+
         /// force install
         #[arg(short, long, action)]
         force: bool,
-        /// list of IOCs to deploy, space separated
-        #[clap(default_value = "", value_parser, num_args = 1.., value_delimiter = ' ')]
+
+        /// list of IOCs to deploy, space separated. Excludes `--all`!
+        // #[clap(default_value = "", value_parser, num_args = 1.., value_delimiter = ' ')]
+        #[clap(value_parser, num_args = 1.., value_delimiter = ' ')]
         iocs: Option<Vec<String>>,
     },
     Stage {

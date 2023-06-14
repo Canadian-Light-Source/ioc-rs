@@ -49,6 +49,7 @@ fn main() {
             dryrun,
             retain,
             nodiff,
+            all,
             force,
             iocs,
         }) => {
@@ -56,9 +57,10 @@ fn main() {
             debug!("dryrun: {}", dryrun);
             debug!("retain: {}", retain);
             debug!("no diff: {}", nodiff);
+            debug!("all IOCs: {}", all);
             debug!("force:  {}", force);
             // worker
-            install::ioc_install(iocs, &settings, dryrun, retain, nodiff, force);
+            install::ioc_install(iocs, &settings, dryrun, retain, nodiff, all, force);
         }
         Some(Commands::Stage { ioc }) => {
             debug!("stage: {:?}", ioc);
