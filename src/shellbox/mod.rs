@@ -115,13 +115,24 @@ fn render_shellbox_line(ioc: &IOC) -> Result<String, Error> {
 /// read shellbox configuration into a hashmap with the port(s) as key(s)
 fn read_cfg<P: AsRef<Path>>(filename: P) -> HashMap<String, Vec<String>> {
     let mut hashmap: HashMap<String, Vec<String>> = HashMap::new();
-    let mut comments: Vec<String> =
+    let comments: Vec<String> =
         vec!["#- comments below this line. Lines starting with '#-' will be dropped".to_string()];
 
-    let file = File::open(filename).unwrap();
-    let reader = BufReader::new(file);
+    match File::open(filename) {
+        Ok(f) => cfg_hashmap(f, hashmap, comments),
+        Err(_) => {
+            hashmap.insert("comments".to_string(), comments);
+            hashmap
+        }
+    }
+}
 
-    reader
+fn cfg_hashmap(
+    file: File,
+    mut hashmap: HashMap<String, Vec<String>>,
+    mut comments: Vec<String>,
+) -> HashMap<String, Vec<String>> {
+    BufReader::new(file)
         .lines()
         .filter_map(Result::ok)
         .filter(|line| !line.starts_with("#-"))
@@ -142,7 +153,6 @@ fn read_cfg<P: AsRef<Path>>(filename: P) -> HashMap<String, Vec<String>> {
                 }
             }
         });
-
     hashmap.insert("comments".to_string(), comments);
     hashmap
 }
