@@ -109,13 +109,21 @@ fn render_shellbox_line(ioc: &IOC) -> Result<String, Error> {
 /// read shellbox configuration into a hashmap with the port(s) as key(s)
 fn read_cfg<P: AsRef<Path>>(filename: P) -> HashMap<String, Vec<String>> {
     let mut hashmap: HashMap<String, Vec<String>> = HashMap::new();
+    let mut comments: Vec<String> =
+        vec!["#- comments below this line. Lines starting with '#-' will be dropped".to_string()];
 
     let file = File::open(filename).unwrap();
     let reader = BufReader::new(file);
 
     for line in reader.lines() {
         let line = line.unwrap();
+        if line.starts_with("#-") {
+            // drop lines with '#-'
+            continue;
+        }
         if line.starts_with('#') {
+            // collect comment line
+            comments.push(line);
             continue;
         }
         let fields: Vec<&str> = line.split(',').collect();
@@ -125,12 +133,13 @@ fn read_cfg<P: AsRef<Path>>(filename: P) -> HashMap<String, Vec<String>> {
 
         hashmap.insert(key, payload);
     }
-
+    hashmap.insert("comments".to_string(), comments);
     hashmap
 }
 
 /// get key value pair from shellbox configuration line
 fn get_kv_pair(line: String) -> Option<(String, Vec<String>)> {
+    warn!("---> {}", line);
     if line.starts_with('#') {
         return None;
     }
@@ -164,10 +173,18 @@ fn hashmap_to_cfg(hashmap: HashMap<String, Vec<String>>) -> Option<String> {
         error!("{} empty hashmap. This should _not_ happen!", cross!());
         return None;
     }
+    let mut hashmap = hashmap.clone(); // mutable clone
+    let comments = hashmap.remove("comments").unwrap_or(vec!["#-".to_string()]);
     let mut result = String::new();
+
     for (key, value) in hashmap {
         let mut s = key + ",";
         s += &value.join(",");
+        s += "\n";
+        result += &s;
+    }
+    for line in comments {
+        let mut s = line;
         s += "\n";
         result += &s;
     }
