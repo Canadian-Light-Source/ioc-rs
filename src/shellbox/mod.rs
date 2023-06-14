@@ -25,7 +25,7 @@ pub fn ioc_shellbox(ioc: &IOC, settings: &Config) -> std::io::Result<()> {
             trace!("pre-existing config file");
             let mut hm = read_cfg(&shellbox_config_file);
 
-            let kv = get_kv_pair(cfg_line.clone()).unwrap();
+            let kv = get_kv_pair(cfg_line.clone());
             let port = kv.0;
             let payload = kv.1;
             if is_duplicate(hm.clone(), &port, &payload) {
@@ -115,39 +115,39 @@ fn read_cfg<P: AsRef<Path>>(filename: P) -> HashMap<String, Vec<String>> {
     let file = File::open(filename).unwrap();
     let reader = BufReader::new(file);
 
-    for line in reader.lines() {
-        let line = line.unwrap();
-        if line.starts_with("#-") {
-            // drop lines with '#-'
-            continue;
-        }
-        if line.starts_with('#') {
-            // collect comment line
-            comments.push(line);
-            continue;
-        }
-        let fields: Vec<&str> = line.split(',').collect();
+    reader
+        .lines()
+        .filter_map(Result::ok)
+        .filter(|line| !line.starts_with("#-"))
+        .map(|line| {
+            if line.starts_with('#') {
+                Some((true, (line, vec!["".to_string()]))) // Collect comment lines
+            } else {
+                Some((false, get_kv_pair(line))) // Store key-value pairs in a tuple
+            }
+        })
+        .for_each(|item| {
+            if let Some((is_comment, data)) = item {
+                let (key, payload) = data;
+                if is_comment {
+                    comments.push(key);
+                } else {
+                    hashmap.insert(key, payload);
+                }
+            }
+        });
 
-        let key = fields[0].to_owned();
-        let payload = fields[1..].iter().map(|&x| x.to_owned()).collect();
-
-        hashmap.insert(key, payload);
-    }
     hashmap.insert("comments".to_string(), comments);
     hashmap
 }
 
 /// get key value pair from shellbox configuration line
-fn get_kv_pair(line: String) -> Option<(String, Vec<String>)> {
-    warn!("---> {}", line);
-    if line.starts_with('#') {
-        return None;
-    }
+fn get_kv_pair(line: String) -> (String, Vec<String>) {
     let fields: Vec<&str> = line.split(',').collect();
 
     let key = fields[0].to_owned();
     let payload = fields[1..].iter().map(|&x| x.to_owned()).collect();
-    Some((key, payload))
+    (key, payload)
 }
 
 /// update the hashmap, modify existing entry, or add new
