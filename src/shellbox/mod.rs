@@ -20,41 +20,35 @@ pub fn ioc_shellbox(ioc: &IOC, settings: &Config) -> std::io::Result<()> {
 
     let cfg_line = render_shellbox_line(ioc).unwrap();
 
-    match shellbox_config_file.exists() {
-        true => {
-            trace!("pre-existing config file");
-            let mut hm = read_cfg(&shellbox_config_file);
+    let mut hm = read_cfg(&shellbox_config_file);
+    let (port, payload) = get_kv_pair(cfg_line.clone());
+    if is_duplicate(&hm, &port, &payload) {
+        error!(
+            "{} {}: identical IOC entry detected on a different port!",
+            cross!(),
+            ioc.name.red(),
+        );
+        error!(
+            "{} shellbox config was {} updated. Please update {:?} manually",
+            cross!(),
+            "not".red(),
+            shellbox_config_file
+        );
+        return Ok(());
+    }
+    update_hm(&mut hm, port, payload);
 
-            let kv = get_kv_pair(cfg_line.clone()).unwrap();
-            let port = kv.0;
-            let payload = kv.1;
-            if is_duplicate(hm.clone(), &port, &payload) {
-                error!(
-                    "{} shellbox config was {} updated. Please update {:?} manually",
-                    cross!(),
-                    "not".red(),
-                    shellbox_config_file
-                );
-                return Ok(());
-            }
-
-            update_hm(&mut hm, port, payload);
-
-            let lines = hashmap_to_cfg(hm);
-
-            let mut file = File::create(&shellbox_config_file)?;
-            if let Some(string) = lines {
-                file.write_all(string.as_bytes())?
-            }
-        }
-        false => {
-            warn!("create shellbox config");
-            let root = Path::new(&shellbox_root).join(&ioc.config.ioc.host);
-            fs::create_dir_all(root)?;
-            let mut file = File::create(shellbox_config_file)?;
-            file.write_all(cfg_line.as_bytes())?;
-        }
+    let content = match hashmap_to_cfg(hm) {
+        Some(lines) => lines,
+        None => cfg_line,
     };
+
+    // write to file
+    let root = Path::new(&shellbox_root).join(&ioc.config.ioc.host);
+    fs::create_dir_all(root)?;
+    let mut file = File::create(&shellbox_config_file)?;
+    file.write_all(content.as_bytes())?;
+
     info!("{} shellbox config updated.", tick!());
 
     Ok(())
@@ -109,45 +103,55 @@ fn render_shellbox_line(ioc: &IOC) -> Result<String, Error> {
 /// read shellbox configuration into a hashmap with the port(s) as key(s)
 fn read_cfg<P: AsRef<Path>>(filename: P) -> HashMap<String, Vec<String>> {
     let mut hashmap: HashMap<String, Vec<String>> = HashMap::new();
-    let mut comments: Vec<String> =
+    let comments: Vec<String> =
         vec!["#- comments below this line. Lines starting with '#-' will be dropped".to_string()];
 
-    let file = File::open(filename).unwrap();
-    let reader = BufReader::new(file);
-
-    for line in reader.lines() {
-        let line = line.unwrap();
-        if line.starts_with("#-") {
-            // drop lines with '#-'
-            continue;
+    match File::open(filename) {
+        Ok(f) => cfg_hashmap(f, hashmap, comments),
+        Err(_) => {
+            hashmap.insert("comments".to_string(), comments);
+            hashmap
         }
-        if line.starts_with('#') {
-            // collect comment line
-            comments.push(line);
-            continue;
-        }
-        let fields: Vec<&str> = line.split(',').collect();
-
-        let key = fields[0].to_owned();
-        let payload = fields[1..].iter().map(|&x| x.to_owned()).collect();
-
-        hashmap.insert(key, payload);
     }
+}
+
+fn cfg_hashmap(
+    file: File,
+    mut hashmap: HashMap<String, Vec<String>>,
+    mut comments: Vec<String>,
+) -> HashMap<String, Vec<String>> {
+    BufReader::new(file)
+        .lines()
+        .filter_map(Result::ok)
+        .filter(|line| !line.starts_with("#-"))
+        .map(|line| {
+            if line.starts_with('#') {
+                Some((true, (line, vec!["".to_string()]))) // Collect comment lines
+            } else {
+                Some((false, get_kv_pair(line))) // Store key-value pairs in a tuple
+            }
+        })
+        .for_each(|item| {
+            if let Some((is_comment, data)) = item {
+                let (key, payload) = data;
+                if is_comment {
+                    comments.push(key);
+                } else {
+                    hashmap.insert(key, payload);
+                }
+            }
+        });
     hashmap.insert("comments".to_string(), comments);
     hashmap
 }
 
 /// get key value pair from shellbox configuration line
-fn get_kv_pair(line: String) -> Option<(String, Vec<String>)> {
-    warn!("---> {}", line);
-    if line.starts_with('#') {
-        return None;
-    }
+fn get_kv_pair(line: String) -> (String, Vec<String>) {
     let fields: Vec<&str> = line.split(',').collect();
 
     let key = fields[0].to_owned();
     let payload = fields[1..].iter().map(|&x| x.to_owned()).collect();
-    Some((key, payload))
+    (key, payload)
 }
 
 /// update the hashmap, modify existing entry, or add new
@@ -191,17 +195,8 @@ fn hashmap_to_cfg(hashmap: HashMap<String, Vec<String>>) -> Option<String> {
     Some(result)
 }
 
-fn is_duplicate(hashmap: HashMap<String, Vec<String>>, port: &str, payload: &[String]) -> bool {
-    for (key, value) in hashmap {
-        if (value == payload) && (key != port) {
-            error!(
-                "{} new config for port {} has duplicate payload for existing port {}",
-                cross!(),
-                key.red(),
-                port.yellow()
-            );
-            return true;
-        }
-    }
-    false
+fn is_duplicate(hashmap: &HashMap<String, Vec<String>>, port: &str, payload: &[String]) -> bool {
+    hashmap
+        .iter()
+        .any(|(key, value)| (value == payload) && (key != port))
 }
