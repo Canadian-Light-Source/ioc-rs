@@ -188,14 +188,12 @@ mod tests {
     #[test]
     fn test_ioc_deploy_success() -> io::Result<()> {
         let settings = Settings::build("tests/config/test_deploy.toml").unwrap();
-        let stage_root = settings.get::<String>("filesystem.stage").unwrap();
-        let deploy_root = settings.get::<String>("filesystem.deploy").unwrap();
-        let test_ioc = IOC::new(
-            Path::new("./tests/UTEST_IOC01"),
-            Path::new(&stage_root),
-            Path::new(&deploy_root),
-        )
-        .unwrap();
+
+        let temp_dir = tempdir()?;
+        let stage_dir = temp_dir.path().join("stage");
+        let dest_dir = temp_dir.path().join("dest");
+
+        let test_ioc = IOC::new(Path::new("./tests/UTEST_IOC01"), stage_dir, dest_dir).unwrap();
         stage::ioc_stage(&None, Some(test_ioc.clone()), &settings);
 
         assert!(test_ioc.deploy().is_ok());
