@@ -80,19 +80,13 @@ pub fn render_startup(ioc: &IOC, template_dir: &str) -> std::io::Result<()> {
 
 #[cfg(test)]
 mod render_tests {
-    use std::path::Path;
-
+    use crate::test_utils::new_test_ioc;
     // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
 
     #[test]
     fn startup() {
-        let test_ioc = IOC::new(
-            Path::new("./tests/UTEST_IOC01"),
-            Path::new("./tests/tmp/stage/"),
-            Path::new("./tests/tmp"),
-        )
-        .unwrap();
+        let test_ioc = new_test_ioc("./tests/UTEST_IOC01").unwrap();
         let expected = "\
 # ------------------
 # TEST HEADER

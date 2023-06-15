@@ -37,3 +37,60 @@ pub fn copy_recursively(source: impl AsRef<Path>, destination: impl AsRef<Path>)
     }
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use tempfile::tempdir;
+    // Note this useful idiom: importing names from outer (for mod tests) scope.
+    use super::*;
+
+    #[test]
+    fn copy_files() -> io::Result<()> {
+        let temp_dir = tempdir()?;
+        let source_dir = temp_dir.path().join("source");
+        fs::create_dir_all(source_dir.join("cfg"))?;
+        fs::create_dir_all(source_dir.join("nested_dir"))?;
+        fs::write(source_dir.join("empty.txt"), "file in root")?;
+        fs::write(
+            source_dir.join("nested_dir/nested_file.txt"),
+            "file in nested_dir -> ends up in root",
+        )?;
+        fs::write(source_dir.join("cfg/file_in_cfg_dir.txt"), "file in cfg")?;
+
+        let target_dir = temp_dir.path().join("target");
+
+        let empty_file = target_dir.join("empty.txt");
+        let nested_file = target_dir.join("nested_file.txt");
+        let cfg_file = target_dir.join("cfg/file_in_cfg_dir.txt");
+
+        copy_recursively(source_dir, &target_dir).unwrap();
+
+        // check if all files made it
+        assert!(empty_file.exists());
+        assert!(cfg_file.exists());
+        assert!(nested_file.exists());
+        Ok(())
+    }
+
+    #[test]
+    fn rm_dir_file() -> io::Result<()> {
+        let temp_dir = tempdir()?;
+        let temp_dir = temp_dir.path();
+
+        let nested_dir = temp_dir.join("nested_dir");
+        fs::create_dir_all(&nested_dir)?;
+
+        let empty_file = temp_dir.join("empty.txt");
+        fs::write(&empty_file, "empty")?;
+
+        // assert test file is present
+        assert!(empty_file.exists());
+        // clear directory
+        assert!(remove_dir_contents(temp_dir).is_ok());
+        // assert test file is deleted
+        assert!(!empty_file.exists());
+        // assert nested dir is deleted
+        assert!(!nested_dir.exists());
+        Ok(())
+    }
+}

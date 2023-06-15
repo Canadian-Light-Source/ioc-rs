@@ -82,7 +82,14 @@ impl IOC {
                 destination,
                 config,
             }),
-            false => Err("Could not find source of IOC."),
+            false => {
+                println!(
+                    "{} IOC source not found. {}",
+                    cross!(),
+                    source.as_ref().to_string_lossy()
+                );
+                Err("Could not find source of IOC.")
+            }
         }
     }
 
@@ -128,6 +135,68 @@ impl IOC {
             self.name,
             &self.destination.as_path()
         );
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    // Note this useful idiom: importing names from outer (for mod tests) scope.
+    use super::*;
+    use crate::settings::Settings;
+    use crate::stage;
+    use tempfile::tempdir;
+
+    #[test]
+    fn diff_ioc_success() -> io::Result<()> {
+        // Set up a temporary directory to use as the stage and destination.
+        let temp_dir = tempdir()?;
+        let stage_dir = temp_dir.path().join("stage");
+        let dest_dir = temp_dir.path().join("dest");
+
+        let test_ioc = IOC::new(Path::new("./tests/UTEST_IOC01"), stage_dir, dest_dir).unwrap();
+
+        std::fs::create_dir_all(&test_ioc.stage)?;
+        std::fs::create_dir_all(&test_ioc.destination)?;
+        std::fs::write(test_ioc.stage.join("file1.txt"), "file1 contents")?;
+        std::fs::write(test_ioc.destination.join("file1.txt"), "file1 contents mod")?;
+
+        assert!(test_ioc.diff_ioc().is_ok());
+        Ok(())
+    }
+
+    #[test]
+    fn test_from_list_success() -> io::Result<()> {
+        let temp_dir = tempdir()?;
+        let source_dir = temp_dir.path().join("source");
+        let stage_dir = temp_dir.path().join("stage");
+        let dest_dir = temp_dir.path().join("dest");
+        let ioc_names = vec!["foo".to_string(), "bar".to_string()];
+        let mut ioc_list: Vec<String> = Vec::new();
+        for ioc in ioc_names.clone() {
+            let path = &source_dir.join(ioc);
+            std::fs::create_dir_all(path)?;
+            ioc_list.extend_from_slice(&[path.to_str().unwrap().to_string()]);
+        }
+        let iocs = IOC::from_list(&ioc_list, stage_dir, dest_dir);
+        iocs.iter()
+            .enumerate()
+            .for_each(|(n, i)| assert_eq!(i.name, ioc_names[n]));
+        Ok(())
+    }
+
+    #[test]
+    fn test_ioc_deploy_success() -> io::Result<()> {
+        let settings = Settings::build("tests/config/test_deploy.toml").unwrap();
+
+        let temp_dir = tempdir()?;
+        let stage_dir = temp_dir.path().join("stage");
+        let dest_dir = temp_dir.path().join("dest");
+
+        let test_ioc = IOC::new(Path::new("./tests/UTEST_IOC01"), stage_dir, dest_dir).unwrap();
+        stage::ioc_stage(&None, Some(test_ioc.clone()), &settings);
+
+        assert!(test_ioc.deploy().is_ok());
         Ok(())
     }
 }

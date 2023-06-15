@@ -35,8 +35,7 @@ pub fn hash_ioc(ioc: &IOC) -> io::Result<()> {
 /// obtain directory hash
 fn get_directory_hash(dir: impl AsRef<Path>) -> String {
     let mut hash = Blake2s256::new();
-    let directory = dir.as_ref().to_str().unwrap();
-    get_hash_folder(directory, &mut hash, 1, |_| {}).unwrap()
+    get_hash_folder(dir.as_ref(), &mut hash, 1, |_| {}).unwrap()
 }
 
 /// check whether destination has been tempered with
@@ -90,11 +89,48 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::settings::Settings;
-    use crate::stage;
+    use crate::test_utils::new_test_ioc;
     // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
 
+    // pass if destination is absent, aka, new IOC -> no hash to compare
+    #[test]
+    fn test_check_hash_no_dest() -> io::Result<()> {
+        let test_ioc = new_test_ioc("./tests/UTEST_IOC01").unwrap();
+        assert!(check_hash(&test_ioc, &false).is_ok());
+        Ok(())
+    }
+    // full path tree exists, bogus hash: (force) -> Ok, (no force) -> Fail
+    #[test]
+    fn test_check_hash_mismatch() -> io::Result<()> {
+        let test_ioc = new_test_ioc("./tests/UTEST_IOC01").unwrap();
+
+        std::fs::create_dir_all(&test_ioc.destination)?;
+        std::fs::write(test_ioc.destination.join("file1.txt"), "hash test")?;
+        std::fs::create_dir_all(&test_ioc.data)?;
+        std::fs::write(test_ioc.data.join("hash"), "c00ffee")?;
+
+        assert!(check_hash(&test_ioc, &false).is_err());
+        assert!(check_hash(&test_ioc, &true).is_ok());
+        Ok(())
+    }
+    // full path tree exists, proper hash: (no force) -> Ok
+    #[test]
+    fn test_check_hash_match() -> io::Result<()> {
+        let test_ioc = new_test_ioc("./tests/UTEST_IOC01").unwrap();
+
+        std::fs::create_dir_all(&test_ioc.destination)?;
+        std::fs::write(test_ioc.destination.join("file1.txt"), "hash test")?;
+        std::fs::create_dir_all(&test_ioc.data)?;
+        std::fs::write(
+            test_ioc.data.join("hash"),
+            "72b285e4d6d34b4c8dc8ec1050b125d73f12f95693a744b48e525b738d0d20fe",
+        )?;
+
+        assert!(check_hash(&test_ioc, &false).is_ok());
+        Ok(())
+    }
+    // validate proper hashing against known hash
     #[test]
     fn test_hash_directory() {
         let dir = Path::new("./tests/hash_test");
@@ -103,24 +139,17 @@ mod tests {
             "55a81f37ab0965a40965b1e8dcef732bca39eb0ef66170056f586a800acff8ee"
         );
     }
-
+    // check for hash file creation
     #[test]
-    fn test_hash_ioc() {
-        let settings = Settings::build("tests/config/test_hash.toml").unwrap();
-        let stage_root = settings.get::<String>("filesystem.stage").unwrap();
-        let deploy_root = settings.get::<String>("filesystem.deploy").unwrap();
-        let test_ioc = IOC::new(
-            Path::new("./tests/UTEST_IOC01"),
-            Path::new(&stage_root),
-            Path::new(&deploy_root),
-        )
-        .unwrap();
-        stage::ioc_stage(&None, Some(test_ioc.clone()), &settings);
+    fn test_hash_ioc() -> io::Result<()> {
+        let test_ioc = new_test_ioc("./tests/UTEST_IOC01").unwrap();
+        std::fs::create_dir_all(&test_ioc.data)?;
+        std::fs::create_dir_all(&test_ioc.stage)?;
+        std::fs::write(test_ioc.stage.join("file1.txt"), "hash test")?;
 
-        let _ = hash_ioc(&test_ioc);
+        assert!(hash_ioc(&test_ioc).is_ok());
         // the actual check
         assert!(&test_ioc.hash_file.exists());
-        assert!(fs::remove_dir_all(test_ioc.data).is_ok());
-        assert!(fs::remove_dir_all(test_ioc.stage).is_ok());
+        Ok(())
     }
 }
