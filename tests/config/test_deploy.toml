@@ -1,5 +1,3 @@
-debug = false
-
 [filesystem]
 stage = "tests/tmp/stage_deploy/"
 deploy = "tests/tmp/deploy/ioc/"

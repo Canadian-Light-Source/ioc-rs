@@ -20,12 +20,12 @@ pub struct Cli {
 
 impl Cli {
     /// returns log level filter based on the command line arguments, if debug is enabled in the configuration, the CLI is overridden
-    pub fn get_level_filter(&self, debug: bool) -> LevelFilter {
-        let mut cli_level = self.log_level.as_ref().unwrap().to_lowercase();
+    pub fn get_level_filter(&self) -> LevelFilter {
+        let cli_level = self.log_level.as_ref().unwrap().to_lowercase();
 
-        if debug {
-            cli_level = "debug".to_string()
-        };
+        // if debug {
+        //     cli_level = "debug".to_string()
+        // };
         if cli_level == "trace" {
             LevelFilter::Trace
         } else if cli_level == "debug" {
@@ -91,24 +91,24 @@ mod tests {
         };
         // fallback to "Error"
         test_cli.log_level = Some("foobar".to_string());
-        assert_eq!(test_cli.get_level_filter(false), LevelFilter::Error);
+        assert_eq!(test_cli.get_level_filter(), LevelFilter::Error);
         // case insensitive
         test_cli.log_level = Some("eRrOr".to_string());
-        assert_eq!(test_cli.get_level_filter(false), LevelFilter::Error);
+        assert_eq!(test_cli.get_level_filter(), LevelFilter::Error);
 
         test_cli.log_level = Some("error".to_string());
-        assert_eq!(test_cli.get_level_filter(false), LevelFilter::Error);
+        assert_eq!(test_cli.get_level_filter(), LevelFilter::Error);
 
         test_cli.log_level = Some("warn".to_string());
-        assert_eq!(test_cli.get_level_filter(false), LevelFilter::Warn);
+        assert_eq!(test_cli.get_level_filter(), LevelFilter::Warn);
 
         test_cli.log_level = Some("info".to_string());
-        assert_eq!(test_cli.get_level_filter(false), LevelFilter::Info);
+        assert_eq!(test_cli.get_level_filter(), LevelFilter::Info);
 
         test_cli.log_level = Some("debug".to_string());
-        assert_eq!(test_cli.get_level_filter(false), LevelFilter::Debug);
+        assert_eq!(test_cli.get_level_filter(), LevelFilter::Debug);
 
         test_cli.log_level = Some("trace".to_string());
-        assert_eq!(test_cli.get_level_filter(false), LevelFilter::Trace);
+        assert_eq!(test_cli.get_level_filter(), LevelFilter::Trace);
     }
 }

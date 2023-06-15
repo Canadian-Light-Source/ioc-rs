@@ -22,9 +22,11 @@ use settings::Settings;
 mod file_system;
 mod metadata;
 mod shellbox;
-mod test_utils;
 
 use metadata::PackageData;
+
+#[cfg(test)]
+mod test_utils;
 
 fn main() {
     let cli = Cli::parse();
@@ -32,8 +34,7 @@ fn main() {
     let settings = Settings::build(&config_file).unwrap();
 
     // determine log level
-    let dbg = settings.get_bool("debug").unwrap();
-    let log_lvl = cli.get_level_filter(dbg);
+    let log_lvl = cli.get_level_filter();
 
     // initialize logging
     SimpleLogger::new()

@@ -1,7 +1,5 @@
 # system default configuration for `ioc`
 # this file is mandatory and needs to placed in `/opt/apps/ioc/config/`
-debug = false
-
 [filesystem]
 stage = "stage/"
 deploy = "deploy/ioc/"
