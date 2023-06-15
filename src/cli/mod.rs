@@ -19,13 +19,10 @@ pub struct Cli {
 }
 
 impl Cli {
-    /// returns log level filter based on the command line arguments, if debug is enabled in the configuration, the CLI is overridden
+    /// returns log level filter based on the command line arguments
     pub fn get_level_filter(&self) -> LevelFilter {
         let cli_level = self.log_level.as_ref().unwrap().to_lowercase();
 
-        // if debug {
-        //     cli_level = "debug".to_string()
-        // };
         if cli_level == "trace" {
             LevelFilter::Trace
         } else if cli_level == "debug" {
