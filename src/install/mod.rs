@@ -57,8 +57,12 @@ pub fn ioc_install(
         }
         // staging
         trace!("staging {}", ioc.name.blue().bold());
-        stage::ioc_stage(&None, Some(ioc.clone()), settings);
+        match stage::stage(ioc) {
+            Ok(_) => {}
+            Err(e) => error!("{}, staging failed with: {}", cross!(), e),
+        }
         if ioc.destination.exists() && !*nodiff {
+            // hah, not nodiff, like a proper Bavarian :)
             match ioc.diff_ioc() {
                 Ok(_) => info!("{} diffed {} see output above", tick!(), ioc.name.blue()),
                 Err(e) => error!(
