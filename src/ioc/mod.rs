@@ -8,7 +8,7 @@ use log::{debug, error, trace};
 
 use crate::{
     file_system,
-    log_macros::{cross, exclaim, tick},
+    log_macros::{cross, tick},
 };
 
 mod diff;
