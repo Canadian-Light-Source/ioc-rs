@@ -1,5 +1,4 @@
 {
-    "debug": true,
     "filesystem": {
         "stage": "TEST_stage_dev/",
         "deploy": "TEST_deploy/ioc_dev/",
