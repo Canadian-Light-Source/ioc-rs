@@ -3,6 +3,7 @@ use std::io;
 use std::path::Path;
 use tempfile::tempdir;
 
+#[cfg(test)]
 pub fn new_test_ioc<P>(ioc_path: P) -> io::Result<IOC>
 where
     P: AsRef<Path>,

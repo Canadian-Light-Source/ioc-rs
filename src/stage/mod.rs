@@ -149,7 +149,6 @@ mod tests {
     fn test_stage_ioc_name_success() -> io::Result<()> {
         let settings = Settings::build("./tests/config/test_stage.toml").unwrap();
         let stage_root = settings.get::<String>("filesystem.stage").unwrap();
-        let destination = settings.get::<String>("filesystem.deploy").unwrap();
 
         ioc_stage(&Some("tests/UTEST_IOC01".to_string()), None, &settings);
         // the actual check
