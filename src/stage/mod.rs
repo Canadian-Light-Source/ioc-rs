@@ -131,30 +131,31 @@ mod tests {
     }
 
     #[test]
-    fn test_stage_ioc_struct_success() {
+    fn test_stage_ioc_struct_success() -> io::Result<()> {
         let settings = Settings::build("./tests/config/test_stage.toml").unwrap();
 
-        let test_ioc = IOC::new(
-            Path::new("./tests/UTEST_IOC01"),
-            Path::new("./tests/tmp/stage_test1/"),
-            Path::new("./tests/tmp/deploy/ioc/"),
-        )
-        .unwrap();
+        let temp_dir = tempdir()?;
+        let stage_dir = temp_dir.path().join("stage");
+        let dest_dir = temp_dir.path().join("dest");
+
+        let test_ioc = IOC::new(Path::new("./tests/UTEST_IOC01"), stage_dir, dest_dir).unwrap();
         ioc_stage(&None, Some(test_ioc.clone()), &settings);
         // the actual check
         assert!(&test_ioc.stage.exists());
-        assert!(fs::remove_dir_all(&test_ioc.stage).is_ok());
+        Ok(())
     }
 
     #[test]
-    fn test_stage_ioc_name_success() {
+    fn test_stage_ioc_name_success() -> io::Result<()> {
         let settings = Settings::build("./tests/config/test_stage.toml").unwrap();
         let stage_root = settings.get::<String>("filesystem.stage").unwrap();
+        let destination = settings.get::<String>("filesystem.deploy").unwrap();
 
         ioc_stage(&Some("tests/UTEST_IOC01".to_string()), None, &settings);
         // the actual check
         let stage_dir = Path::new("./tests/tmp/stage/UTEST_IOC01");
         assert!(stage_dir.exists());
         assert!(fs::remove_dir_all(stage_root).is_ok());
+        Ok(())
     }
 }
