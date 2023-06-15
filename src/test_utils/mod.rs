@@ -11,5 +11,7 @@ where
     let temp_dir = tempdir()?;
     let stage_dir = temp_dir.path().join("stage");
     let dest_dir = temp_dir.path().join("dest");
-    Ok(IOC::new(ioc_path, stage_dir, dest_dir).unwrap())
+    let template_dir = temp_dir.path().join("templates");
+
+    Ok(IOC::new(ioc_path, stage_dir, dest_dir, template_dir).expect("failed to build IOC!"))
 }

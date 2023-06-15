@@ -36,7 +36,7 @@ pub fn ioc_install(
     trace!("  templates:{:?}", template_dir);
     trace!("-----------------------------------------");
 
-    let ioc_list = IOC::from_list(&unique_iocs, &stage_root, &deploy_root);
+    let ioc_list = IOC::from_list(&unique_iocs, &stage_root, &deploy_root, &template_dir);
     trace!("{} ioc list created", tick!());
 
     for ioc in &ioc_list {
