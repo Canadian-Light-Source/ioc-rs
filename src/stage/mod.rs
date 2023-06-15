@@ -73,6 +73,7 @@ mod tests {
     use crate::test_utils::new_test_ioc;
     use std::fs;
     use std::path::Path;
+    use tempfile::tempdir;
 
     // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
@@ -104,25 +105,29 @@ mod tests {
     }
 
     #[test]
-    fn test_ioc_stage_error() {
+    fn test_ioc_stage_error() -> io::Result<()> {
         let settings = Settings::build("./tests/config/test_stage.toml").unwrap();
-        let stage_root = Path::new("./tests/tmp/stage_test_fail/");
 
-        let test_ioc = IOC::new(
-            Path::new("./tests/UTEST_IOC01"),
-            Path::new("./tests/tmp/stage_test_fail/no_write_permission"),
-            Path::new("./tests/tmp/deploy/ioc/"),
-        )
-        .unwrap();
+        let temp_dir = tempdir()?;
+        let stage_dir = temp_dir.path().join("stage");
+        let dest_dir = temp_dir.path().join("dest");
+
+        // set the trap, create stage and make it readonly
+        fs::create_dir_all(&stage_dir)?;
         // make target readonly --> can't create stage_root --> fail
-        let mut perms = fs::metadata(stage_root).unwrap().permissions();
+        let mut perms = fs::metadata(&stage_dir).unwrap().permissions();
         if !perms.readonly() {
             perms.set_readonly(true);
-            fs::set_permissions(stage_root, perms).unwrap();
+            fs::set_permissions(&stage_dir, perms).unwrap();
         }
+        // let the stage_root be a directory in the write only stage --> creating will fail
+        let stage_root = stage_dir.join("no_write_permission");
+
+        let test_ioc = IOC::new(Path::new("./tests/UTEST_IOC01"), stage_root, dest_dir).unwrap();
         ioc_stage(&None, Some(test_ioc.clone()), &settings);
         // the actual check
         assert!(!&test_ioc.stage.exists());
+        Ok(())
     }
 
     #[test]
