@@ -139,19 +139,16 @@ fn check_ioc_list(list: &Option<Vec<String>>, all: bool) -> Vec<String> {
             );
             panic!("--all is exclusive to empty list of IOCs")
         }
-        Some(l) if !l.is_empty() => {
-            filter_duplicates(l.clone()).expect("unable to filter duplicates!")
-        }
+        Some(l) => filter_duplicates(l.clone()).expect("unable to filter duplicates!"),
         None => {
             if !all {
-                error!("{} empty list iof IOCs, consider --all", cross!());
+                error!("{} empty list of IOCs, consider --all", cross!());
                 panic!("empty list of IOCs")
             } else {
                 debug!("{} {} selected", exclaim!(), "--all".bold().yellow());
                 filter_duplicates(vec!["*".to_string()]).expect("unable to filter duplicates!")
             }
         }
-        Some(_) => panic!(),
     }
 }
 
@@ -199,6 +196,24 @@ fn remove_dir(dir: impl AsRef<Path>) -> io::Result<()> {
 mod tests {
     use super::*;
     use tempfile::tempdir;
+
+    #[test]
+    #[should_panic(expected = "--all is exclusive to empty list of IOCs")]
+    fn test_check_ioc_list_panic_all_plus_list() {
+        check_ioc_list(&Some(vec!["".to_string()]), true);
+    }
+
+    #[test]
+    #[should_panic(expected = "empty list of IOCs")]
+    fn test_check_ioc_list_panic_empty_list_ex_all() {
+        check_ioc_list(&None, false);
+    }
+
+    #[test]
+    // check if the first element of the returned vector is a directory.
+    fn test_check_ioc_list_panic_empty_list_all() {
+        assert!(Path::new(check_ioc_list(&None, true).first().unwrap()).is_dir());
+    }
 
     #[test]
     fn test_filter_duplicates() -> io::Result<()> {
