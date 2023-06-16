@@ -1,10 +1,12 @@
+use std::io::{self, Error, ErrorKind};
+
 use std::path::Path;
 // for CLI
 use clap::Parser;
 
 // logging
 use colored::Colorize;
-use log::debug;
+use log::{debug, error, info};
 use simple_logger::SimpleLogger;
 
 // my mods
@@ -24,12 +26,13 @@ mod file_system;
 mod metadata;
 mod shellbox;
 
+use crate::log_macros::cross;
 use metadata::PackageData;
 
 #[cfg(test)]
 mod test_utils;
 
-fn main() {
+fn main() -> io::Result<()> {
     let cli = Cli::parse();
     let config_file = cli.config_file.clone().unwrap_or("".to_string());
     let settings = Settings::build(&config_file).unwrap();
@@ -64,19 +67,30 @@ fn main() {
             debug!("force:  {}", force);
             // worker
             install::ioc_install(iocs, &settings, dryrun, retain, nodiff, all, force);
+            Ok(())
         }
-        Some(Commands::Stage { ioc }) => {
+        Some(Commands::Stage { ioc, path }) => {
             debug!("stage: {:?}", ioc);
-            let source = Path::new(ioc.as_ref().unwrap());
-            // let stage_root = settings.get::<String>("filesystem.stage").unwrap();
-            // let deploy_root = settings.get::<String>("filesystem.deploy").unwrap();
-            // let template_dir = settings.get::<String>("app.template_directory").unwrap();
-            // let ioc_struct = ioc::IOC::new(&work_dir, &stage_root, &deploy_root, &template_dir)
-            //     .expect("from_list failed");
-            // stage::ioc_stage(&None, Some(ioc_struct), &settings);
-            let ioc_struct = ioc::IOC::new_with_settings(source, &settings);
-            let _ = stage::stage(&ioc_struct);
+            let source = Path::new(ioc);
+            let stage_root = match path {
+                Some(p) => {
+                    info!("staging in {}", p);
+                    p.clone()
+                }
+                None => settings.get::<String>("filesystem.stage").unwrap(),
+            };
+            let deploy_root = settings.get::<String>("filesystem.deploy").unwrap();
+            let template_dir = settings.get::<String>("app.template_directory").unwrap();
+            let ioc_struct = ioc::IOC::new(source, &stage_root, &deploy_root, &template_dir)
+                .expect("from_list failed");
+            stage::stage(&ioc_struct)?;
+            Ok(())
         }
-        None => println!("no active command, check --help for more information."),
+        None => {
+            let error_msg = "no active command, check --help for more information.";
+            error!("{} {}", cross!(), error_msg);
+            let e = Error::new(ErrorKind::Other, error_msg);
+            Err(e)
+        }
     }
 }

@@ -68,8 +68,12 @@ pub enum Commands {
     },
     Stage {
         /// single IOCs to stage
-        #[clap(default_value = "")]
-        ioc: Option<String>,
+        #[clap()]
+        ioc: String,
+        /// optional staging directory
+        // #[clap(default_value = "")]
+        #[arg(short, long)]
+        path: Option<String>,
     },
 }
 
