@@ -79,6 +79,7 @@ pub fn ioc_install(
 
         // deployment
         if !dryrun {
+            // actual deployment run
             trace!("deploying {}", ioc.name.blue().bold());
             match ioc.deploy() {
                 Ok(_) => info!("{} deployed {}", tick!(), ioc.name.blue()),
@@ -105,6 +106,7 @@ pub fn ioc_install(
                 }
             };
         } else {
+            // dryrun
             info!("{} was chosen, no deployment", "--dryrun".yellow());
             if !retain {
                 match ioc_cleanup(ioc) {
@@ -191,4 +193,44 @@ fn remove_dir(dir: impl AsRef<Path>) -> io::Result<()> {
     trace!("removing directory {}", dir.as_ref().to_str().unwrap());
     fs::remove_dir_all(dir)?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::tempdir;
+
+    #[test]
+    fn test_filter_duplicates() -> io::Result<()> {
+        let input = vec!["foo", "bar"];
+
+        let temp_dir = tempdir()?;
+        for dir in &input {
+            let full_path = temp_dir.path().join(dir);
+            fs::create_dir_all(full_path)?
+        }
+
+        let mut expected: Vec<String> = input
+            .iter()
+            .map(|&p| temp_dir.path().join(p).to_str().unwrap().to_string())
+            .collect();
+        expected.sort();
+
+        let glob_test = temp_dir.path().join("*").to_str().unwrap().to_string();
+        let res = filter_duplicates(vec![glob_test.clone()])?;
+        assert_eq!(res, expected);
+
+        let foo_test = temp_dir.path().join("foo").to_str().unwrap().to_string();
+        let res = filter_duplicates(vec![glob_test.clone(), foo_test.clone()])?;
+        assert_eq!(res, expected);
+
+        let bar_test = temp_dir.path().join("bar").to_str().unwrap().to_string();
+        let res = filter_duplicates(vec![glob_test.clone(), bar_test.clone()])?;
+        assert_eq!(res, expected);
+
+        let res = filter_duplicates(vec![bar_test.clone(), foo_test.clone()])?;
+        assert_eq!(res, expected);
+
+        Ok(())
+    }
 }
