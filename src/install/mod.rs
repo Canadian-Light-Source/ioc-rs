@@ -211,8 +211,16 @@ mod tests {
 
     #[test]
     // check if the first element of the returned vector is a directory.
-    fn test_check_ioc_list_panic_empty_list_all() {
+    fn test_check_ioc_list_empty_list_all() {
         assert!(Path::new(check_ioc_list(&None, true).first().unwrap()).is_dir());
+    }
+
+    #[test]
+    // "*" must be equal to `--all`
+    fn test_check_ioc_list_glob_eq_empty_all() {
+        let all = check_ioc_list(&None, true);
+        let glob_star = check_ioc_list(&Some(vec!["*".to_string()]), false);
+        assert_eq!(all, glob_star);
     }
 
     #[test]
