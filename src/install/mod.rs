@@ -231,6 +231,12 @@ mod tests {
         let res = filter_duplicates(vec![bar_test.clone(), foo_test.clone()])?;
         assert_eq!(res, expected);
 
+        let mut res = filter_duplicates(vec![foo_test])?;
+        assert_eq!(res.pop().unwrap(), expected.pop().unwrap());
+
+        let mut res = filter_duplicates(vec![bar_test])?;
+        assert_eq!(res.pop().unwrap(), expected.pop().unwrap());
+
         Ok(())
     }
 }
