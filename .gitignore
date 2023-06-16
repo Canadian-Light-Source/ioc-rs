@@ -3,3 +3,4 @@ MTEST*
 /TEST/*
 /dev
 tarpaulin-report.html
+*.profraw
