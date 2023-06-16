@@ -1,4 +1,3 @@
-use std::env;
 use std::io;
 use std::path::{Path, PathBuf};
 
@@ -113,11 +112,10 @@ impl IOC {
     ) -> Vec<Self> {
         debug!("collecting iocs ...");
         list.iter()
-            .map(|name| {
-                let work_dir = env::current_dir().unwrap().join(name);
-                trace!("working dir: {:?}", work_dir);
+            .map(|source| {
+                trace!("source dir: {:?}", source);
                 // TODO: `match` this to create pleasing Error log
-                IOC::new(&work_dir, &stage_root, &destination_root, &template_dir)
+                IOC::new(source, &stage_root, &destination_root, &template_dir)
                     .expect("from_list failed")
             })
             .collect()

@@ -1,4 +1,4 @@
-use std::env;
+use std::path::Path;
 // for CLI
 use clap::Parser;
 
@@ -67,14 +67,14 @@ fn main() {
         }
         Some(Commands::Stage { ioc }) => {
             debug!("stage: {:?}", ioc);
-            let work_dir = env::current_dir().unwrap().join(ioc.as_ref().unwrap());
+            let source = Path::new(ioc.as_ref().unwrap());
             // let stage_root = settings.get::<String>("filesystem.stage").unwrap();
             // let deploy_root = settings.get::<String>("filesystem.deploy").unwrap();
             // let template_dir = settings.get::<String>("app.template_directory").unwrap();
             // let ioc_struct = ioc::IOC::new(&work_dir, &stage_root, &deploy_root, &template_dir)
             //     .expect("from_list failed");
             // stage::ioc_stage(&None, Some(ioc_struct), &settings);
-            let ioc_struct = ioc::IOC::new_with_settings(work_dir, &settings);
+            let ioc_struct = ioc::IOC::new_with_settings(source, &settings);
             let _ = stage::stage(&ioc_struct);
         }
         None => println!("no active command, check --help for more information."),
