@@ -40,6 +40,9 @@ where
         if entry.file_name().into_string().unwrap().starts_with('.') {
             continue;
         }
+        if !destination.as_ref().join(entry.file_name()).exists() {
+            continue;
+        }
 
         let filetype = entry.file_type()?;
         if filetype.is_dir() {
