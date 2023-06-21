@@ -114,9 +114,9 @@ mod tests {
         // skip hidden files -> Ok
         assert!(diff_recursively(&source, &dest).is_ok());
 
-        fs::write(source.join("file1.txt"), "file1")?;
-        // source w/o dest -> Fail
-        assert!(diff_recursively(&source, &dest).is_err());
+        fs::write(source_cfg.join("new_file"), "this is new")?;
+        // skip new files -> Ok
+        assert!(diff_recursively(&source, &dest).is_ok());
 
         fs::write(dest.join("file1.txt"), "file1_dest")?;
         // files root available -> Ok
