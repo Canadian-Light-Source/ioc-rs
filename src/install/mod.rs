@@ -5,7 +5,7 @@ use colored::Colorize;
 use config::Config;
 use glob::glob;
 use log::{debug, error, info, trace};
-use std::{fs, io};
+use std::{env, fs, io};
 
 use crate::shellbox::ioc_shellbox;
 use crate::{
@@ -142,13 +142,21 @@ fn check_ioc_list(list: &Option<Vec<String>>, all: bool) -> Vec<String> {
         Some(l) => filter_duplicates(l.clone()).expect("unable to filter duplicates!"),
         None => {
             if !all {
-                error!("{} empty list of IOCs, consider --all", cross!());
-                panic!("empty list of IOCs")
+                debug!("{} empty list of IOCs, using current_dir", exclaim!());
+                filter_duplicates(vec![get_current_dir()]).expect("unable to filter duplicates!")
             } else {
                 debug!("{} {} selected", exclaim!(), "--all".bold().yellow());
                 filter_duplicates(vec!["*".to_string()]).expect("unable to filter duplicates!")
             }
         }
+    }
+}
+
+fn get_current_dir() -> String {
+    if let Ok(current_dir) = env::current_dir() {
+        current_dir.to_str().unwrap().to_string()
+    } else {
+        panic!("Failed to get current working directory")
     }
 }
 
