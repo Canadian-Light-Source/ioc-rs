@@ -49,10 +49,6 @@ pub enum Commands {
         #[arg(long, action)]
         nodiff: bool,
 
-        /// install _all_ IOCs in PWD
-        #[arg(short, long, action)]
-        all: bool,
-
         /// force install
         #[arg(short, long, action)]
         force: bool,
