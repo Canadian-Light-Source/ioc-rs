@@ -45,10 +45,6 @@ pub enum Commands {
         #[arg(short, long, action)]
         dryrun: bool,
 
-        /// retain staging data
-        #[arg(long, action)]
-        retain: bool,
-
         /// do not show the diff
         #[arg(long, action)]
         nodiff: bool,
