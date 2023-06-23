@@ -74,7 +74,7 @@ fn render_shellbox_line(ioc: &IOC) -> Result<String, Error> {
             trace!("command: {}", opts);
             opts
         }
-        None => format!("iocsh -n {}", ioc.name),
+        None => format!("iocsh -n {} startup.iocsh", ioc.name),
     };
 
     let procserv_opts = match conf.ioc.procserv_opts {
