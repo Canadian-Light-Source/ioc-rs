@@ -53,7 +53,6 @@ fn main() -> io::Result<()> {
     match &cli.command {
         Some(Commands::Install {
             dryrun,
-            retain,
             nodiff,
             all,
             force,
@@ -61,12 +60,11 @@ fn main() -> io::Result<()> {
         }) => {
             debug!("command: <{}>", "install".yellow());
             debug!("dryrun: {}", dryrun);
-            debug!("retain: {}", retain);
             debug!("no diff: {}", nodiff);
             debug!("all IOCs: {}", all);
             debug!("force:  {}", force);
             // worker
-            install::ioc_install(iocs, &settings, dryrun, retain, nodiff, all, force);
+            install::ioc_install(iocs, &settings, dryrun, nodiff, all, force);
             Ok(())
         }
         Some(Commands::Stage { ioc, path }) => {

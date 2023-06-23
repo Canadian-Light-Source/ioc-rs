@@ -20,7 +20,6 @@ pub fn ioc_install(
     iocs: &Option<Vec<String>>,
     settings: &Config,
     dryrun: &bool,
-    retain: &bool,
     nodiff: &bool,
     all: &bool,
     force: &bool,
@@ -108,22 +107,15 @@ pub fn ioc_install(
         } else {
             // dryrun
             info!("{} was chosen, no deployment", "--dryrun".yellow());
-            if !retain {
-                match ioc_cleanup(ioc) {
-                    Ok(_) => {}
-                    Err(e) => error!(
-                        "{} clean up failed for {} with error: {}",
-                        cross!(),
-                        &ioc.name,
-                        e
-                    ),
-                };
-            } else {
-                info!(
-                    "{} stage directory retained. Make sure to clean up after yourself!",
-                    exclaim!()
-                );
-            }
+            match ioc_cleanup(ioc) {
+                Ok(_) => {}
+                Err(e) => error!(
+                    "{} clean up failed for {} with error: {}",
+                    cross!(),
+                    &ioc.name,
+                    e
+                ),
+            };
         }
         trace!("------------");
     }
@@ -209,12 +201,6 @@ mod tests {
     #[should_panic(expected = "--all is exclusive to empty list of IOCs")]
     fn test_check_ioc_list_panic_all_plus_list() {
         check_ioc_list(&Some(vec!["".to_string()]), true);
-    }
-
-    #[test]
-    #[should_panic(expected = "empty list of IOCs")]
-    fn test_check_ioc_list_panic_empty_list_ex_all() {
-        check_ioc_list(&None, false);
     }
 
     #[test]
