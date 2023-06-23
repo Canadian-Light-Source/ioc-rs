@@ -21,10 +21,9 @@ pub fn ioc_install(
     settings: &Config,
     dryrun: &bool,
     nodiff: &bool,
-    all: &bool,
     force: &bool,
 ) {
-    let unique_iocs = check_ioc_list(iocs, *all);
+    let unique_iocs = check_ioc_list(iocs);
     let stage_root = settings.get::<String>("filesystem.stage").unwrap();
     let deploy_root = settings.get::<String>("filesystem.deploy").unwrap();
     let template_dir = settings.get::<String>("app.template_directory").unwrap();
@@ -121,25 +120,12 @@ pub fn ioc_install(
     }
 }
 
-fn check_ioc_list(list: &Option<Vec<String>>, all: bool) -> Vec<String> {
+fn check_ioc_list(list: &Option<Vec<String>>) -> Vec<String> {
     match list {
-        Some(_l) if all => {
-            error!(
-                "{} {} is exclusive to empty list of IOCs.",
-                cross!(),
-                "--all".bold().yellow()
-            );
-            panic!("--all is exclusive to empty list of IOCs")
-        }
         Some(l) => filter_duplicates(l.clone()).expect("unable to filter duplicates!"),
         None => {
-            if !all {
-                debug!("{} empty list of IOCs, using current_dir", exclaim!());
-                filter_duplicates(vec![get_current_dir()]).expect("unable to filter duplicates!")
-            } else {
-                debug!("{} {} selected", exclaim!(), "--all".bold().yellow());
-                filter_duplicates(vec!["*".to_string()]).expect("unable to filter duplicates!")
-            }
+            debug!("{} empty list of IOCs, using current_dir", exclaim!());
+            filter_duplicates(vec![get_current_dir()]).expect("unable to filter duplicates!")
         }
     }
 }
@@ -198,23 +184,9 @@ mod tests {
     use tempfile::tempdir;
 
     #[test]
-    #[should_panic(expected = "--all is exclusive to empty list of IOCs")]
-    fn test_check_ioc_list_panic_all_plus_list() {
-        check_ioc_list(&Some(vec!["".to_string()]), true);
-    }
-
-    #[test]
     // check if the first element of the returned vector is a directory.
     fn test_check_ioc_list_empty_list_all() {
-        assert!(Path::new(check_ioc_list(&None, true).first().unwrap()).is_dir());
-    }
-
-    #[test]
-    // "*" must be equal to `--all`
-    fn test_check_ioc_list_glob_eq_empty_all() {
-        let all = check_ioc_list(&None, true);
-        let glob_star = check_ioc_list(&Some(vec!["*".to_string()]), false);
-        assert_eq!(all, glob_star);
+        assert!(Path::new(check_ioc_list(&None).first().unwrap()).is_dir());
     }
 
     #[test]
