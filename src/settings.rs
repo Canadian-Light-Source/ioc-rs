@@ -54,7 +54,7 @@ pub fn cfg_path_to_string<T: AsRef<Path>>(path: Option<T>) -> Option<String> {
 
 /// checks if the path is a file and returns the path as `String` if so, else return an error.
 fn get_path_if_is_file<P: AsRef<Path>>(path: P) -> io::Result<String> {
-    debug!("{:?}", path.as_ref());
+    debug!("searching for config file in: {:?}", path.as_ref());
     match path.as_ref().is_file() {
         true => Ok(path.as_ref().to_str().unwrap().to_string()),
         false => Err(io::Error::new(io::ErrorKind::NotFound, "file not found")),
@@ -210,7 +210,7 @@ mod tests {
     }
 
     #[test]
-    fn config_from_home_sub_success() -> io::Result<()> {
+    fn config_from_home_config_success() -> io::Result<()> {
         let temp_dir = tempdir()?;
         env::set_var(HOME, temp_dir.path().as_os_str());
         let temp_dir = temp_dir.path().join(CONFIG_DIR);
