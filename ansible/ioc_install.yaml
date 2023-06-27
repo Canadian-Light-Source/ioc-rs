@@ -14,7 +14,7 @@
   - name: copy default config
     ansible.builtin.copy:
       src: "{{ playbook_dir }}/../config/default.toml"
-      dest: /opt/apps/ioc/config/default.toml
+      dest: /opt/apps/ioc/etc/config.toml
       owner: root
       group: root
       mode: '0644'
