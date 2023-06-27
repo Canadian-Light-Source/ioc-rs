@@ -1,5 +1,5 @@
 [package]
-name = "ioc-rs"
+name = "ioc"
 description = "install ioc definitions"
 version = "0.16.0"
 authors = ["Niko Kivel <niko.kivel@lightsource.ca>"]

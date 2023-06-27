@@ -6,9 +6,9 @@
     ansible_remote_tmp: /tmp
 
   tasks:
-  - name: create directory /opt/apps/ioc/config
+  - name: create directory /opt/apps/ioc/etc
     ansible.builtin.file:
-      path: /opt/apps/ioc/config
+      path: /opt/apps/ioc/etc
       state: directory
 
   - name: copy default config
