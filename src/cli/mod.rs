@@ -5,6 +5,10 @@ use log::LevelFilter;
 #[derive(Parser, Clone)]
 #[command(about = "Tool for the deployment of ioc definitions", long_about = None)]
 pub struct Cli {
+    /// display version
+    #[arg(short, long, action)]
+    pub version: bool,
+
     /// logger
     #[arg(short, long, default_value = "info")]
     pub log_level: Option<String>,
@@ -78,6 +82,7 @@ mod tests {
     #[test]
     fn log_level() {
         let mut test_cli = Cli {
+            version: false,
             log_level: None,
             config_file: None,
             command: None,
