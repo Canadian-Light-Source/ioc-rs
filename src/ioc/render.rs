@@ -1,3 +1,4 @@
+use std::ffi::OsString;
 use std::{
     fs::{self, File},
     io::Write,
@@ -7,7 +8,7 @@ use chrono::{DateTime, Local};
 use colored::Colorize;
 use log::{error, trace};
 use tera::{Context, Error, Tera};
-use users::get_current_username;
+// use users::get_current_username;
 
 use crate::{ioc::IOC, log_macros::tick, metadata::PackageData};
 
@@ -34,11 +35,15 @@ fn create_parser(template_dir: &str) -> Tera {
     tera
 }
 
+fn get_user_name() -> Option<OsString> {
+    match users::get_current_username() {
+        Some(uname) => Some(uname),
+        None => std::env::var_os("USER").or(Some("unkown".into())),
+    }
+}
+
 fn render_startup_script(ioc: &IOC, template_dir: &str) -> Result<String, Error> {
-    let user_name = match get_current_username() {
-        Some(uname) => uname,
-        None => "unkown".into(),
-    };
+    let user_name = get_user_name().expect("failed to get username");
 
     let tera = create_parser(template_dir);
 
