@@ -8,7 +8,8 @@ At deployment a hash will be generated and stored in `./deploy/ioc/data/${IOC}/h
 For testing, a pure staging can be performed.
 After staging, the files will remain on the file system for manual inspection.
 
-Future features might add funtionanlty to probe "PV monitor", or connect to the BMC of bare metal ioc hosts, ...
+
+Future features might add functionality to probe "PV monitor", or connect to the BMC of bare metal ioc hosts, ...
 
 ## License
 MIT or GPLv3 License
@@ -20,12 +21,17 @@ MIT or GPLv3 License
 Note: this is subject to change, as the tool will become XDG compliant at one point. Stay tuned.
 
 ## Configuration
-Default config is mandatory in `/opt/apps/ioc/config/default.{yaml,toml,json}`.
-This config is overwritten if a `dev` file is found in `${PWD}/config/`.
-Additionally, the `-c` argument can specify a file.
+The config file is either specified with the `-c <FILE>` argument, or searched for in these places:
+- `$IOC_CONFIG_PATH`
+- `$XDG_CONFIG_HOME/ioc/.ioc.toml`
+- `$XDG_CONFIG_HOME/.ioc.toml`
+- `$HOME/.config/ioc/.ioc.toml`
+- `$HOME/.ioc.toml`
 
-NOTE: Incremental changes are allowed. The sequence is default -> dev -> argument.
-NOTE: incremental changes will be deprecated. It make it impossible to trace the origin of the settings. So a single config will be read, and that's it.
+For production, `IOC_CONFIG_PATH` will point to `/opt/apps/ioc/config/default.toml`.
+
+
+Accepted formats are, toml,yaml and json.
 
 ## `ioc install`
 

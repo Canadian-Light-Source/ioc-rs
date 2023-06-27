@@ -35,7 +35,6 @@ mod test_utils;
 fn main() -> io::Result<()> {
     let cli = Cli::parse();
     let config_file = cli.config_file.clone().unwrap_or("".to_string());
-    let settings = Settings::build(&config_file).unwrap();
 
     // determine log level
     let log_lvl = cli.get_level_filter();
@@ -46,6 +45,7 @@ fn main() -> io::Result<()> {
         .init()
         .unwrap();
 
+    let settings = Settings::build(&config_file).unwrap();
     let crate_info = PackageData::new();
     crate_info.report();
 
