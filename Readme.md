@@ -8,6 +8,7 @@ At deployment a hash will be generated and stored in `./deploy/ioc/data/${IOC}/h
 For testing, a pure staging can be performed.
 After staging, the files will remain on the file system for manual inspection.
 
+
 Future features might add functionality to probe "PV monitor", or connect to the BMC of bare metal ioc hosts, ...
 
 ## License
@@ -28,6 +29,7 @@ The config file is either specified with the `-c <FILE>` argument, or searched f
 - `$HOME/.ioc.toml`
 
 For production, `IOC_CONFIG_PATH` will point to `/opt/apps/ioc/config/default.toml`.
+
 
 Accepted formats are, toml,yaml and json.
 
