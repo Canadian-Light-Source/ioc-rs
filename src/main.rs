@@ -1,6 +1,7 @@
 use std::io::{self, Error, ErrorKind};
 
 use std::path::Path;
+use std::process::exit;
 // for CLI
 use clap::Parser;
 
@@ -34,6 +35,13 @@ mod test_utils;
 
 fn main() -> io::Result<()> {
     let cli = Cli::parse();
+
+    if cli.version {
+        let m = metadata::PackageData::new();
+        println!("{} {}", m.get_name(), m.get_version());
+        exit(0);
+    }
+
     let config_file = cli.config_file.clone().unwrap_or("".to_string());
 
     // determine log level

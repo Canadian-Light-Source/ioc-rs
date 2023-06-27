@@ -645,8 +645,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "ioc"
-version = "0.15.1"
+name = "ioc-rs"
+version = "0.16.0"
 dependencies = [
  "blake2",
  "chrono",
