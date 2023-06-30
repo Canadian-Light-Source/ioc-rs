@@ -73,6 +73,7 @@ mod tests {
         let temp_dir = tempdir()?;
         let stage_dir = temp_dir.path().join("stage");
         let dest_dir = temp_dir.path().join("dest");
+        let shellbox_root = temp_dir.path().join("shellbox");
         let template_dir = temp_dir.path().join("templates");
 
         // set the trap, create stage and make it readonly
@@ -90,6 +91,7 @@ mod tests {
             Path::new("./tests/UTEST_IOC01"),
             stage_root,
             dest_dir,
+            shellbox_root,
             template_dir,
         )
         .unwrap();
@@ -107,11 +109,13 @@ mod tests {
         let temp_dir = tempdir()?;
         let stage_dir = temp_dir.path().join("stage");
         let dest_dir = temp_dir.path().join("dest");
+        let shellbox_root = temp_dir.path().join("shellbox");
 
         let test_ioc = IOC::new(
             Path::new("./tests/UTEST_IOC01"),
             stage_dir,
             dest_dir,
+            shellbox_root,
             template_dir,
         )
         .unwrap();

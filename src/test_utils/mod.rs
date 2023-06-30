@@ -11,7 +11,11 @@ where
     let temp_dir = tempdir()?;
     let stage_dir = temp_dir.path().join("stage");
     let dest_dir = temp_dir.path().join("dest");
+    let shellbox_root = temp_dir.path().join("shellbox");
     let template_dir = temp_dir.path().join("templates");
 
-    Ok(IOC::new(ioc_path, stage_dir, dest_dir, template_dir).expect("failed to build IOC!"))
+    Ok(
+        IOC::new(ioc_path, stage_dir, dest_dir, shellbox_root, template_dir)
+            .expect("failed to build IOC!"),
+    )
 }

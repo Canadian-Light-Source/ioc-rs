@@ -3,7 +3,6 @@ use crate::{
     log_macros::{cross, exclaim, tick},
 };
 use colored::Colorize;
-use config::Config;
 use log::{error, info, trace, warn};
 use std::collections::HashMap;
 use std::fs;
@@ -12,11 +11,11 @@ use std::io::{BufRead, BufReader, Write};
 use std::path::Path;
 use tera::{Context, Error, Tera};
 
-pub fn ioc_shellbox(ioc: &IOC, settings: &Config) -> std::io::Result<()> {
-    let shellbox_root = settings.get::<String>("filesystem.shellbox").unwrap();
-    let shellbox_config_file = Path::new(&shellbox_root)
-        .join(&ioc.config.ioc.host)
-        .join("shellbox.conf");
+const SHELLBOX_CONFIG_FILE: &str = "shellbox.conf";
+
+pub fn ioc_shellbox(ioc: &IOC) -> std::io::Result<()> {
+    let shellbox_root = &ioc.shellbox_root.join(&ioc.config.ioc.host);
+    let shellbox_config_file = Path::new(&shellbox_root).join(SHELLBOX_CONFIG_FILE);
 
     let cfg_line = render_shellbox_line(ioc).unwrap();
 
@@ -44,7 +43,7 @@ pub fn ioc_shellbox(ioc: &IOC, settings: &Config) -> std::io::Result<()> {
     };
 
     // write to file
-    let root = Path::new(&shellbox_root).join(&ioc.config.ioc.host);
+    let root = Path::new(&shellbox_root);
     fs::create_dir_all(root)?;
     let mut file = File::create(&shellbox_config_file)?;
     file.write_all(content.as_bytes())?;

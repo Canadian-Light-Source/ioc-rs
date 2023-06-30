@@ -1,6 +1,7 @@
 [filesystem]
 stage = "tests/tmp/stage/"
 deploy = "tests/tmp/deploy/ioc/"
+shellbox = "tests/tmp/deploy/ioc/hosts/"
 
 [app]
 template_directory = "templates/**/*.tera"
