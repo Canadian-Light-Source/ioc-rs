@@ -3,7 +3,6 @@ use std::path::{Path, PathBuf};
 
 // logging
 use colored::Colorize;
-use config::Config;
 use log::{debug, error, trace};
 
 use crate::{
@@ -31,6 +30,8 @@ pub struct IOC {
     pub hash_file: PathBuf,
     /// deploy directory for IOC
     pub destination: PathBuf,
+    /// shellbox root directory
+    pub shellbox_root: PathBuf,
     /// configuration
     pub config: ioc_config::Settings,
     /// template directory
@@ -43,10 +44,10 @@ impl IOC {
     /// should fail if source does not contain at least a 'startup.iocsh'
     // TODO: implement pre-check
     pub fn new(
-        // name: &String,
         source: impl AsRef<Path>,
         stage_root: impl AsRef<Path>,
         destination_root: impl AsRef<Path>,
+        shellbox_root: impl AsRef<Path>,
         template_root: impl AsRef<Path>,
     ) -> Result<IOC, &'static str> {
         let name = source
@@ -83,6 +84,7 @@ impl IOC {
                 data,
                 hash_file,
                 destination,
+                shellbox_root: shellbox_root.as_ref().to_path_buf(),
                 config,
                 templates: template_root.as_ref().to_path_buf(),
             }),
@@ -97,17 +99,11 @@ impl IOC {
         }
     }
 
-    pub fn new_with_settings(source: impl AsRef<Path>, settings: &Config) -> Self {
-        let stage_root = settings.get::<String>("filesystem.stage").unwrap();
-        let deploy_root = settings.get::<String>("filesystem.deploy").unwrap();
-        let template_dir = settings.get::<String>("app.template_directory").unwrap();
-        Self::new(&source, &stage_root, &deploy_root, &template_dir).expect("from_list failed")
-    }
-
     pub fn from_list(
         list: &[String],
         stage_root: impl AsRef<Path>,
         destination_root: impl AsRef<Path>,
+        shellbox_root: impl AsRef<Path>,
         template_dir: impl AsRef<Path>,
     ) -> Vec<Self> {
         debug!("collecting iocs ...");
@@ -115,8 +111,14 @@ impl IOC {
             .map(|source| {
                 trace!("source dir: {:?}", source);
                 // TODO: `match` this to create pleasing Error log
-                IOC::new(source, &stage_root, &destination_root, &template_dir)
-                    .expect("from_list failed")
+                IOC::new(
+                    source,
+                    &stage_root,
+                    &destination_root,
+                    &shellbox_root,
+                    &template_dir,
+                )
+                .expect("from_list failed")
             })
             .collect()
     }
@@ -165,6 +167,7 @@ mod tests {
         let temp_dir = tempdir()?;
         let stage_dir = temp_dir.path().join("stage");
         let dest_dir = temp_dir.path().join("dest");
+        let shellbox_root = temp_dir.path().join("shellbox");
         let template_dir = temp_dir.path().join("templates");
 
         let test_ioc = IOC::new(
@@ -172,6 +175,7 @@ mod tests {
             stage_dir,
             dest_dir,
             template_dir,
+            shellbox_root,
         )
         .unwrap();
 
@@ -190,6 +194,7 @@ mod tests {
         let source_dir = temp_dir.path().join("source");
         let stage_dir = temp_dir.path().join("stage");
         let dest_dir = temp_dir.path().join("dest");
+        let shellbox_root = temp_dir.path().join("shellbox");
         let template_dir = temp_dir.path().join("templates");
         let ioc_names = vec!["foo".to_string(), "bar".to_string()];
         let mut ioc_list: Vec<String> = Vec::new();
@@ -198,7 +203,7 @@ mod tests {
             std::fs::create_dir_all(path)?;
             ioc_list.extend_from_slice(&[path.to_str().unwrap().to_string()]);
         }
-        let iocs = IOC::from_list(&ioc_list, stage_dir, dest_dir, template_dir);
+        let iocs = IOC::from_list(&ioc_list, stage_dir, dest_dir, shellbox_root, template_dir);
         iocs.iter()
             .enumerate()
             .for_each(|(n, i)| assert_eq!(i.name, ioc_names[n]));
@@ -213,11 +218,13 @@ mod tests {
         let temp_dir = tempdir()?;
         let stage_dir = temp_dir.path().join("stage");
         let dest_dir = temp_dir.path().join("dest");
+        let shellbox_root = temp_dir.path().join("shellbox");
 
         let test_ioc = IOC::new(
             Path::new("./tests/UTEST_IOC01"),
             stage_dir,
             dest_dir,
+            shellbox_root,
             template_dir,
         )
         .unwrap();

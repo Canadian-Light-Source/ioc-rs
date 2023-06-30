@@ -85,9 +85,16 @@ fn main() -> io::Result<()> {
                 None => settings.get::<String>("filesystem.stage").unwrap(),
             };
             let deploy_root = settings.get::<String>("filesystem.deploy").unwrap();
+            let shellbox_root = settings.get::<String>("filesystem.shellbox").unwrap();
             let template_dir = settings.get::<String>("app.template_directory").unwrap();
-            let ioc_struct = ioc::IOC::new(source, &stage_root, &deploy_root, &template_dir)
-                .expect("from_list failed");
+            let ioc_struct = ioc::IOC::new(
+                source,
+                &stage_root,
+                &deploy_root,
+                &shellbox_root,
+                &template_dir,
+            )
+            .expect("from_list failed");
             stage::stage(&ioc_struct)?;
             Ok(())
         }

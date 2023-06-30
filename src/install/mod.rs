@@ -26,6 +26,7 @@ pub fn ioc_install(
     let unique_iocs = check_ioc_list(iocs);
     let stage_root = settings.get::<String>("filesystem.stage").unwrap();
     let deploy_root = settings.get::<String>("filesystem.deploy").unwrap();
+    let shellbox_root = settings.get::<String>("filesystem.shellbox").unwrap();
     let template_dir = settings.get::<String>("app.template_directory").unwrap();
 
     trace!("configuration ---------------------------");
@@ -34,7 +35,13 @@ pub fn ioc_install(
     trace!("  templates:{:?}", template_dir);
     trace!("-----------------------------------------");
 
-    let ioc_list = IOC::from_list(&unique_iocs, &stage_root, &deploy_root, &template_dir);
+    let ioc_list = IOC::from_list(
+        &unique_iocs,
+        &stage_root,
+        &deploy_root,
+        &shellbox_root,
+        &template_dir,
+    );
     trace!("{} ioc list created", tick!());
 
     for ioc in &ioc_list {
@@ -73,7 +80,7 @@ pub fn ioc_install(
         }
 
         // TODO: error handler
-        let _ = ioc_shellbox(ioc, settings);
+        let _ = ioc_shellbox(ioc);
 
         // deployment
         if !dryrun {
