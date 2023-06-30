@@ -3,6 +3,7 @@ use std::io;
 use colored::Colorize;
 use log::{debug, trace};
 
+use crate::origin::Origin;
 use crate::{file_system, ioc::render, ioc::IOC, log_macros::tick};
 
 pub fn stage(ioc: &IOC) -> io::Result<()> {
@@ -15,6 +16,7 @@ pub fn stage(ioc: &IOC) -> io::Result<()> {
         &ioc.source.as_path(),
         &ioc.stage.as_path()
     );
+    Origin::new(&ioc.source).write_origin_file(&ioc.stage)?;
     render::render_startup(ioc, ioc.templates.as_os_str().to_str().unwrap())?;
     // TODO: Add shellbox here?
     debug!("{} staging of {:?} complete.", tick!(), ioc.name);
