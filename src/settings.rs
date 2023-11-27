@@ -8,8 +8,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
-const IOC_CONFIG_NAME: &str = ".ioc.toml";
-const IOC_CONFIG_PATH: &str = "IOC_CONFIG_PATH";
+const IOC_CONFIG_NAME: &str = "ioc.toml";
+const IOC_CONFIG_FILE: &str = "IOC_CONFIG_FILE";
 const IOC_DIR: &str = "ioc";
 const CONFIG_DIR: &str = ".config";
 const HOME: &str = "HOME";
@@ -39,7 +39,7 @@ pub struct Settings {
 /// Returns the config file path as `String` if there is one. When `None` is provided then the config
 /// is looked for in the following locations in order:
 ///
-/// - `$IOC_CONFIG_PATH`
+/// - `$IOC_CONFIG_FILE`
 /// - `$XDG_CONFIG_HOME/ioc/.ioc.toml`
 /// - `$XDG_CONFIG_HOME/.ioc.toml`
 /// - `$HOME/.config/ioc/.ioc.toml`
@@ -61,9 +61,9 @@ fn get_path_if_is_file<P: AsRef<Path>>(path: P) -> io::Result<String> {
     }
 }
 
-/// Try to find a config in `IOC_CONFIG_PATH`.
+/// Try to find a config in `IOC_CONFIG_FILE`.
 fn config_from_config_path() -> Option<String> {
-    env::var_os(IOC_CONFIG_PATH)
+    env::var_os(IOC_CONFIG_FILE)
         .map(PathBuf::from)
         .map(get_path_if_is_file)
         .and_then(Result::ok)
@@ -153,7 +153,7 @@ mod tests {
         let temp_dir = tempdir()?;
         let cfg_file = temp_dir.path().join(IOC_CONFIG_NAME);
         std::fs::write(&cfg_file, "")?;
-        env::set_var("IOC_CONFIG_PATH", cfg_file.as_os_str());
+        env::set_var("IOC_CONFIG_FILE", cfg_file.as_os_str());
 
         assert_eq!(
             config_from_config_path(),

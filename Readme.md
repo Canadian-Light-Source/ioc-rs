@@ -12,7 +12,7 @@ After staging, the files will remain on the file system for manual inspection.
 Future features might add functionality to probe "PV monitor", or connect to the BMC of bare metal ioc hosts, ...
 
 ## License
-MIT or GPLv3 License
+GPLv3 License
 
 ## Prerequisites
 
@@ -22,13 +22,13 @@ Note: this is subject to change, as the tool will become XDG compliant at one po
 
 ## Configuration
 The config file is either specified with the `-c <FILE>` argument, or searched for in these places:
-- `$IOC_CONFIG_PATH`
-- `$XDG_CONFIG_HOME/ioc/.ioc.toml`
-- `$XDG_CONFIG_HOME/.ioc.toml`
-- `$HOME/.config/ioc/.ioc.toml`
-- `$HOME/.ioc.toml`
+- `$IOC_CONFIG_FILE`
+- `$XDG_CONFIG_HOME/ioc/ioc.toml`
+- `$XDG_CONFIG_HOME/ioc.toml`
+- `$HOME/.config/ioc/ioc.toml`
+- `$HOME/ioc.toml`
 
-For production, `IOC_CONFIG_PATH` will point to `/opt/apps/ioc/config/default.toml`.
+For production, `IOC_CONFIG_FILE` will point to `/opt/apps/ioc/config/default.toml`.
 
 
 Accepted formats are, toml,yaml and json.
