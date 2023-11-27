@@ -12,6 +12,35 @@ use std::path::Path;
 use tera::{Context, Error, Tera};
 
 const SHELLBOX_CONFIG_FILE: &str = "shellbox.conf";
+#[derive(Debug)]
+pub struct Shellbox {
+    configs: HashMap<String, HashMap<String, Vec<String>>>,
+}
+impl Shellbox {
+    pub fn new<P: AsRef<Path>>(dir: P) -> std::io::Result<Self> {
+        Ok(Shellbox {
+            configs: Self::from_shellbox_root(dir)?,
+        })
+    }
+    fn from_shellbox_root<P: AsRef<Path>>(
+        path: P,
+    ) -> std::io::Result<HashMap<String, HashMap<String, Vec<String>>>> {
+        let entries = fs::read_dir(path)?;
+        let mut hashmap: HashMap<String, HashMap<String, Vec<String>>> = HashMap::new();
+
+        for entry in entries {
+            let entry = entry?;
+            if entry.file_type()?.is_dir() {
+                let hostname = entry.file_name().to_str().unwrap().to_string();
+                hashmap.insert(hostname, read_cfg(entry.path().join(SHELLBOX_CONFIG_FILE)));
+            }
+        }
+        Ok(hashmap)
+    }
+    pub fn get_config(self, hostname: &str) -> std::io::Result<HashMap<String, Vec<String>>> {
+        Ok(self.configs.get(hostname).unwrap().to_owned())
+    }
+}
 
 pub fn ioc_shellbox(ioc: &IOC) -> std::io::Result<()> {
     let shellbox_root = &ioc.shellbox_root.join(&ioc.config.ioc.host);
@@ -56,7 +85,6 @@ pub fn ioc_shellbox(ioc: &IOC) -> std::io::Result<()> {
 // template for comma separated shellbox config
 static SHELLBOX_TEMPLATE: &str =
     "{{ port }},{{ user }},{{ base_dir }},{{ command }},{{ procserv_opts }}";
-
 fn render_shellbox_line(ioc: &IOC) -> Result<String, Error> {
     let conf = ioc.clone().config;
 
@@ -113,7 +141,6 @@ fn read_cfg<P: AsRef<Path>>(filename: P) -> HashMap<String, Vec<String>> {
         }
     }
 }
-
 fn cfg_hashmap(
     file: File,
     mut hashmap: HashMap<String, Vec<String>>,
@@ -198,4 +225,18 @@ fn is_duplicate(hashmap: &HashMap<String, Vec<String>>, port: &str, payload: &[S
     hashmap
         .iter()
         .any(|(key, value)| (value == payload) && (key != port))
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::shellbox;
+    use std::io;
+    use tempfile::tempdir;
+
+    #[test]
+    fn create_shellbox() -> io::Result<()> {
+        let temp_dir = tempdir()?;
+        assert!(shellbox::Shellbox::new(temp_dir).is_ok());
+        Ok(())
+    }
 }
