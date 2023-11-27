@@ -18,8 +18,6 @@ GPLv3 License
 
 - app configuration in `/opt/apps/ioc/config/default.{yaml,toml,json}`
 
-Note: this is subject to change, as the tool will become XDG compliant at one point. Stay tuned.
-
 ## Configuration
 The config file is either specified with the `-c <FILE>` argument, or searched for in these places:
 - `$IOC_CONFIG_FILE`
@@ -30,8 +28,7 @@ The config file is either specified with the `-c <FILE>` argument, or searched f
 
 For production, `IOC_CONFIG_FILE` will point to `/opt/apps/ioc/config/default.toml`.
 
-
-Accepted formats are, toml,yaml and json.
+When specified explicitly, via the `-c` argument or `$IOC_CONFIG_FILE`, the accepted formats are, toml,yaml and json.
 
 ## `ioc install`
 
