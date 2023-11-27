@@ -60,6 +60,7 @@ Please make use of this.
 ====
 [source, shell]
 ----
+$ ioc --help
 Tool for the deployment of ioc definitions
 
 Usage: ioc [OPTIONS] [COMMAND]
