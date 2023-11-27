@@ -1,7 +1,7 @@
 [package]
 name = "ioc"
 description = "install ioc definitions"
-version = "0.17.1"
+version = "0.18.0"
 authors = ["Niko Kivel <niko.kivel@lightsource.ca>"]
 license = "GPLv3"
 keywords = ["CLS", "deployment", "ioc", "tools"]
@@ -12,8 +12,8 @@ edition = "2021"
 
 [dependencies]
 blake2 = "0.10.6"
-chrono = "0.4.24"
-clap = { version = "4.1.9", features = ["derive"] }
+chrono = "0.4.31"
+clap = { version = "4.4.9", features = ["derive"] }
 file-hashing = "0.1.2"
 tera = "1.18.1"
 users = "0.11.0"
