@@ -1,0 +1,234 @@
+:imagesdir: doc/images
+:toc:
+:project_id: ioc-rs
+:icons: font
+:source-highlighter: prettify
+:tags: tool
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+
+= ioc
+
+This tool allows you to deploy IOC applications.
+Currently, the tool is only available for testing.
+The deployment will write to `./deploy/ioc/${IOC}`.
+At deployment a hash will be generated and stored in `./deploy/ioc/data/${IOC}/hash`
+
+For testing, a pure staging can be performed.
+After staging, the files will remain on the file system for manual inspection.
+
+
+Future features might add functionality to probe "PV monitor", or connect to the BMC of bare metal ioc hosts, ...
+
+== License
+GPLv3 License
+
+== Prerequisites
+
+- app configuration with filesystem and application configuration.
+
+.default-config
+[%collapsible]
+====
+[source, toml]
+----
+# system default configuration for `ioc`
+# this file is mandatory and needs to placed in search path or provided as argument.
+# details see the Readme.
+[filesystem]
+stage = "stage/"
+deploy = "deploy/ioc/"
+shellbox = "deploy/ioc/hosts/"
+
+[app]
+# can be a glob, e.g. "templates/**/*.tera"
+template_directory = "/opt/apps/ioc/templates/*.tera"
+----
+====
+
+== `ioc`
+
+=== Help
+The main, as well as the sub-commands have a `--help` argument.
+Please make use of this.
+
+.ioc-help
+[%collapsible]
+====
+[source, shell]
+----
+Tool for the deployment of ioc definitions
+
+Usage: ioc [OPTIONS] [COMMAND]
+
+Commands:
+  install  deployment command
+  stage
+  help     Print this message or the help of the given subcommand(s)
+
+Options:
+  -v, --version                    display version
+  -l, --log-level <LOG_LEVEL>      logger [default: info]
+  -c, --config-file <CONFIG_FILE>  config file
+  -h, --help                       Print help
+
+----
+====
+
+=== Log level
+The log level is set to "info" by default.
+Less logging can be achieved with `--log-level error`, higher levels are achieved with `debug` and `trace`, respectively.
+
+=== Configuration
+The config file is either explicitly specified with the `-c <FILE>` argument, or searched for in these places, in this sequence:
+
+* `$IOC_CONFIG_FILE`
+* `$XDG_CONFIG_HOME/ioc/ioc.toml`
+* `$XDG_CONFIG_HOME/ioc.toml`
+* `$HOME/.config/ioc/ioc.toml`
+* `$HOME/ioc.toml`
+
+NOTE: For production, `IOC_CONFIG_FILE` will point to `/opt/apps/ioc/config/default.toml`.
+
+When specified explicitly, via the `-c` argument or `$IOC_CONFIG_FILE`, the accepted formats are, toml,yaml and json.
+
+== `ioc install`
+
+Install the ioc-definiton and accompaniing files.
+See `ioc install --help` for more information.
+
+.ioc-definiton-examples
+[%collapsible]
+====
+[source, shell]
+----
+MTEST_NIKO01/
+├── cfg
+│   └── important_config.cfg
+├── config.toml
+├── important_special_stuff.db
+└── startup.iocsh
+
+MTEST_NIKO02/
+├── db
+│   ├── a_mighty_subsitututions_file.subs
+│   └── my.db
+└── startup.iocsh
+----
+====
+
+=== What it does
+Takes at least one directory with ioc-definitions, as explicit path, space separated list of paths or glob, for deployment.
+
+.Examples
+[%collapsible]
+====
+
+.single-directory
+[source, shell]
+----
+ioc install MTEST_NIKO01
+ioc install MTEST_NIKO02
+----
+
+.list-of-directories
+[source, shell]
+----
+ioc install MTEST_NIKO01 MTEST_NIKO02
+----
+
+.glob
+[source, shell]
+----
+ioc install MTEST_*
+----
+====
+
+
+
+NOTE: The source directory may contain sub-directories, those are flattened for deployment, except for a `cfg` directory.
+
+NOTE: Hidden directories and files, e.g. `.foo`, will _not_ be deployed.
+
+IMPORTANT: In order to render a configuration for `shellbox`, a configuration file named `config` must be present in the root directory. The configuration file can be "toml, yaml or json". Without the configuration file, the command will fail with an error.
+
+=== Result
+
+Based on the above examples, the result of the deployment looks something like this:
+
+.deployed-ioc-definiton-examples
+[%collapsible]
+====
+[source, shell]
+----
+dev/
+└── deploy
+    └── ioc
+        ├── data
+        │   ├── MTEST_NIKO01
+        │   │   └── hash
+        │   └── MTEST_NIKO02
+        │       └── hash
+        ├── hosts
+        │   ├── localhost
+        │   │   └── shellbox.conf
+        │   └── vioc2400-112a
+        │       └── shellbox.conf
+        ├── MTEST_NIKO01
+        │   ├── cfg
+        │   │   └── important_config.cfg
+        │   ├── config.toml
+        │   ├── important_special_stuff.db
+        │   ├── ORIGIN
+        │   ├── startup.iocsh
+        │   └── startup.iocsh_MTEST_NIKO01
+        └── MTEST_NIKO02
+            ├── a_mighty_subsitututions_file.subs
+            ├── my.db
+            ├── ORIGIN
+            ├── startup.iocsh
+            └── startup.iocsh_MTEST_NIKO02
+----
+====
+
+---
+
+== `ioc stage`
+
+To get a preview of what will be deployed, the staging can be done separately buy running:
+
+.staging-example
+[source,shell]
+----
+ioc stage -p STAGE_TEST MTEST_NIKO01/
+----
+
+== Under the hood
+
+=== Process flow
+
+==== check deployment destination
+
+1. read hash from file
+2. calculate the current checksum
+3. compare against stored value
+4. skip if mismatch (override with `--force`)
+
+==== Stage deployment
+1. find source directory
+2. copy source to staging directory
+3. do the startup wrapping via a template
+
+==== Deployment
+1. calculate the checksum and write to the destination
+2. copy from staging directory to deploy directory
+
+== TODO
+
+- default to PWD if name not specified [implemented]
+- test
+- refactor to move functions to separate mods [implemented]
+- UUID for pvmonitor
