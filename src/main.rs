@@ -11,29 +11,23 @@ use log::{debug, error, info};
 use simple_logger::SimpleLogger;
 
 // my mods
-pub mod log_macros;
-
+pub mod cli;
 mod install;
 pub mod ioc;
+pub mod log_macros;
 mod stage;
-
-pub mod cli;
 use cli::{Cli, Commands};
-
 mod settings;
 use settings::Settings;
-
 mod file_system;
 mod metadata;
 mod origin;
-mod shellbox;
+pub mod shellbox;
 
 use crate::log_macros::cross;
 use metadata::PackageData;
-
 #[cfg(test)]
 mod test_utils;
-
 fn main() -> io::Result<()> {
     let cli = Cli::parse();
 
