@@ -9,7 +9,8 @@ use log::LevelFilter;
 #[derive(Parser, Debug, PartialEq)]
 #[command(
     name = "ioc",
-    about = "Tool for the deployment of ioc definitions\nhttps://github.lightsource.ca/epics-iocs/ioc-rs"
+    about = "Tool for the deployment of ioc definitions",
+    long_about = "Tool for the deployment of ioc definitions\nhttps://github.lightsource.ca/epics-iocs/ioc-rs"
 )]
 pub struct Cli {
     /// shell tab complete generator
