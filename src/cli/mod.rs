@@ -1,15 +1,26 @@
-use clap::{Parser, Subcommand};
+use std::io;
+// use clap::{Parser, Subcommand};
+use clap::{Args, Command, Parser, Subcommand, ValueHint};
+use clap_complete::{generate, Generator, Shell};
 use log::LevelFilter;
 
 // CLI =================================================
-#[derive(Parser, Clone)]
-#[command(about = "Tool for the deployment of ioc definitions", long_about = None)]
+// #[derive(Parser, Clone)]
+#[derive(Parser, Debug, PartialEq)]
+#[command(
+    name = "ioc",
+    about = "Tool for the deployment of ioc definitions\nhttps://github.lightsource.ca/epics-iocs/ioc-rs"
+)]
 pub struct Cli {
-    /// display version
-    #[arg(short, long, action)]
-    pub version: bool,
+    /// shell tab complete generator
+    #[arg(long = "generate", value_enum, hide = true)]
+    pub generator: Option<Shell>,
 
-    /// logger
+    /// display version
+    #[arg(short, action)]
+    pub ver: bool,
+
+    /// log level: error, warn, info, debug, trace
     #[arg(short, long, default_value = "info")]
     pub log_level: Option<String>,
 
@@ -20,6 +31,10 @@ pub struct Cli {
     /// The name of the command
     #[command(subcommand)]
     pub command: Option<Commands>,
+}
+
+pub fn print_completions<G: Generator>(gen: G, cmd: &mut Command) {
+    generate(gen, cmd, cmd.get_name().to_string(), &mut io::stdout());
 }
 
 impl Cli {
@@ -41,36 +56,41 @@ impl Cli {
     }
 }
 
-#[derive(Subcommand, Debug, Clone)]
+#[derive(Subcommand, Debug, Clone, PartialEq)]
 pub enum Commands {
-    /// deployment command
-    Install {
-        /// perform dryrun
-        #[arg(short, long, action)]
-        dryrun: bool,
+    /// deploy one or more ioc definitions
+    Install(InstallCommand),
+    /// stage a single ioc definition (for development and testing)
+    Stage(StageCommand),
+}
 
-        /// do not show the diff
-        #[arg(long, action)]
-        nodiff: bool,
+#[derive(Args, Debug, Clone, PartialEq)]
+pub struct InstallCommand {
+    /// perform dryrun
+    #[arg(short, long, action)]
+    pub dryrun: bool,
 
-        /// force install
-        #[arg(short, long, action)]
-        force: bool,
+    /// do not show the diff
+    #[arg(long, action)]
+    pub nodiff: bool,
 
-        /// list of IOCs to deploy, space separated. Excludes `--all`!
-        // #[clap(default_value = "", value_parser, num_args = 1.., value_delimiter = ' ')]
-        #[clap(value_parser, num_args = 1.., value_delimiter = ' ')]
-        iocs: Option<Vec<String>>,
-    },
-    Stage {
-        /// single IOCs to stage
-        #[clap()]
-        ioc: String,
-        /// optional staging directory
-        // #[clap(default_value = "")]
-        #[arg(short, long)]
-        path: Option<String>,
-    },
+    /// force install
+    #[arg(short, long, action)]
+    pub force: bool,
+
+    /// list of IOCs to deploy, space separated
+    #[clap(value_parser, num_args = 1.., value_delimiter = ' ')]
+    pub iocs: Option<Vec<String>>,
+}
+
+#[derive(Args, Debug, Clone, PartialEq)]
+pub struct StageCommand {
+    /// single IOCs to stage
+    #[clap(value_hint = ValueHint::DirPath)]
+    pub ioc: String,
+    /// optional staging directory
+    #[arg(short, long, value_hint = ValueHint::DirPath)]
+    pub path: Option<String>,
 }
 
 #[cfg(test)]
@@ -82,7 +102,8 @@ mod tests {
     #[test]
     fn log_level() {
         let mut test_cli = Cli {
-            version: false,
+            generator: None,
+            ver: false,
             log_level: None,
             config_file: None,
             command: None,
