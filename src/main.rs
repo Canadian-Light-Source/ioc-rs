@@ -12,11 +12,12 @@ use simple_logger::SimpleLogger;
 
 // my mods
 pub mod cli;
+use cli::{Cli, Commands};
 mod install;
 pub mod ioc;
 pub mod log_macros;
 mod stage;
-use cli::{Cli, Commands};
+
 mod settings;
 use settings::Settings;
 mod file_system;
@@ -27,7 +28,6 @@ pub mod shellbox;
 use crate::log_macros::cross;
 use metadata::PackageData;
 
-use crate::cli::print_completions;
 #[cfg(test)]
 mod test_utils;
 fn main() -> io::Result<()> {
@@ -36,7 +36,7 @@ fn main() -> io::Result<()> {
     if let Some(generator) = cli.generator {
         let mut cmd = Cli::command();
         eprintln!("Generating completion file for {generator:?}...");
-        print_completions(generator, &mut cmd);
+        cli::print_completions(generator, &mut cmd);
         exit(0);
     }
 

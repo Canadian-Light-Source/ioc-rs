@@ -7,19 +7,17 @@ use log::LevelFilter;
 // CLI =================================================
 // #[derive(Parser, Clone)]
 #[derive(Parser, Debug, PartialEq)]
-// #[command(name = "ioc")]
 #[command(
     name = "ioc",
-    about = "Tool for the deployment of ioc definitions",
-    long_about = "Tool for the deployment of ioc definitions\nhttps://github.lightsource.ca/epics-iocs/ioc-rs"
+    about = "Tool for the deployment of ioc definitions\nhttps://github.lightsource.ca/epics-iocs/ioc-rs"
 )]
 pub struct Cli {
     /// shell tab complete generator
-    #[arg(long = "generate", value_enum)]
+    #[arg(long = "generate", value_enum, hide = true)]
     pub generator: Option<Shell>,
 
     /// display version
-    #[arg(short, long, action)]
+    #[arg(short, action)]
     pub ver: bool,
 
     /// log level: error, warn, info, debug, trace
@@ -60,11 +58,9 @@ impl Cli {
 
 #[derive(Subcommand, Debug, Clone, PartialEq)]
 pub enum Commands {
-    // #[command(visible_alias = "hint")]
-    // ValueHint(StageCommand),
-    #[clap(name = "install")]
+    /// deploy one or more ioc definitions
     Install(InstallCommand),
-    #[clap(name = "stage")]
+    /// stage a single ioc definition (for development and testing)
     Stage(StageCommand),
 }
 
@@ -82,8 +78,7 @@ pub struct InstallCommand {
     #[arg(short, long, action)]
     pub force: bool,
 
-    /// list of IOCs to deploy, space separated. Excludes `--all`!
-    // #[clap(default_value = "", value_parser, num_args = 1.., value_delimiter = ' ')]
+    /// list of IOCs to deploy, space separated
     #[clap(value_parser, num_args = 1.., value_delimiter = ' ')]
     pub iocs: Option<Vec<String>>,
 }
@@ -94,7 +89,6 @@ pub struct StageCommand {
     #[clap(value_hint = ValueHint::DirPath)]
     pub ioc: String,
     /// optional staging directory
-    // #[clap(default_value = "")]
     #[arg(short, long, value_hint = ValueHint::DirPath)]
     pub path: Option<String>,
 }
