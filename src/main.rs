@@ -102,44 +102,6 @@ fn main() -> io::Result<()> {
             stage::stage(&ioc_struct)?;
             Ok(())
         }
-        // Some(Commands::Install {
-        //     dryrun,
-        //     nodiff,
-        //     force,
-        //     iocs,
-        // }) => {
-        //     debug!("command: <{}>", "install".yellow());
-        //     debug!("dryrun: {}", dryrun);
-        //     debug!("no diff: {}", nodiff);
-        //     debug!("force:  {}", force);
-        //     // worker
-        //     install::ioc_install(iocs, &settings, dryrun, nodiff, force);
-        //     Ok(())
-        // }
-        // Some(Commands::Stage { ioc, path }) => {
-        //     debug!("stage: {:?}", ioc);
-        //     let source = Path::new(ioc);
-        //     let stage_root = match path {
-        //         Some(p) => {
-        //             info!("staging in {}", p);
-        //             p.clone()
-        //         }
-        //         None => settings.get::<String>("filesystem.stage").unwrap(),
-        //     };
-        //     let deploy_root = settings.get::<String>("filesystem.deploy").unwrap();
-        //     let shellbox_root = settings.get::<String>("filesystem.shellbox").unwrap();
-        //     let template_dir = settings.get::<String>("app.template_directory").unwrap();
-        //     let ioc_struct = ioc::IOC::new(
-        //         source,
-        //         &stage_root,
-        //         &deploy_root,
-        //         &shellbox_root,
-        //         &template_dir,
-        //     )
-        //     .expect("from_list failed");
-        //     stage::stage(&ioc_struct)?;
-        //     Ok(())
-        // }
         None => {
             let error_msg = "no active command, check --help for more information.";
             error!("{} {}", cross!(), error_msg);
