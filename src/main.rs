@@ -3,7 +3,7 @@ use std::io::{self, Error, ErrorKind};
 use std::path::Path;
 use std::process::exit;
 // for CLI
-use clap::Parser;
+use clap::{CommandFactory, Parser};
 
 // logging
 use colored::Colorize;
@@ -26,12 +26,21 @@ pub mod shellbox;
 
 use crate::log_macros::cross;
 use metadata::PackageData;
+
+use crate::cli::print_completions;
 #[cfg(test)]
 mod test_utils;
 fn main() -> io::Result<()> {
     let cli = Cli::parse();
 
-    if cli.version {
+    if let Some(generator) = cli.generator {
+        let mut cmd = Cli::command();
+        eprintln!("Generating completion file for {generator:?}...");
+        print_completions(generator, &mut cmd);
+        exit(0);
+    }
+
+    if cli.ver {
         let m = metadata::PackageData::new();
         println!("{} {}", m.get_name(), m.get_version());
         exit(0);
@@ -54,24 +63,25 @@ fn main() -> io::Result<()> {
 
     // CLI commands
     match &cli.command {
-        Some(Commands::Install {
-            dryrun,
-            nodiff,
-            force,
-            iocs,
-        }) => {
+        Some(Commands::Install(args)) => {
             debug!("command: <{}>", "install".yellow());
-            debug!("dryrun: {}", dryrun);
-            debug!("no diff: {}", nodiff);
-            debug!("force:  {}", force);
+            debug!("dryrun: {}", args.dryrun);
+            debug!("no diff: {}", args.nodiff);
+            debug!("force:  {}", args.force);
             // worker
-            install::ioc_install(iocs, &settings, dryrun, nodiff, force);
+            install::ioc_install(
+                &args.iocs,
+                &settings,
+                &args.dryrun,
+                &args.nodiff,
+                &args.force,
+            );
             Ok(())
         }
-        Some(Commands::Stage { ioc, path }) => {
-            debug!("stage: {:?}", ioc);
-            let source = Path::new(ioc);
-            let stage_root = match path {
+        Some(Commands::Stage(args)) => {
+            debug!("stage: {:?}", args.ioc);
+            let source = Path::new(&args.ioc);
+            let stage_root = match &args.path {
                 Some(p) => {
                     info!("staging in {}", p);
                     p.clone()
@@ -92,6 +102,44 @@ fn main() -> io::Result<()> {
             stage::stage(&ioc_struct)?;
             Ok(())
         }
+        // Some(Commands::Install {
+        //     dryrun,
+        //     nodiff,
+        //     force,
+        //     iocs,
+        // }) => {
+        //     debug!("command: <{}>", "install".yellow());
+        //     debug!("dryrun: {}", dryrun);
+        //     debug!("no diff: {}", nodiff);
+        //     debug!("force:  {}", force);
+        //     // worker
+        //     install::ioc_install(iocs, &settings, dryrun, nodiff, force);
+        //     Ok(())
+        // }
+        // Some(Commands::Stage { ioc, path }) => {
+        //     debug!("stage: {:?}", ioc);
+        //     let source = Path::new(ioc);
+        //     let stage_root = match path {
+        //         Some(p) => {
+        //             info!("staging in {}", p);
+        //             p.clone()
+        //         }
+        //         None => settings.get::<String>("filesystem.stage").unwrap(),
+        //     };
+        //     let deploy_root = settings.get::<String>("filesystem.deploy").unwrap();
+        //     let shellbox_root = settings.get::<String>("filesystem.shellbox").unwrap();
+        //     let template_dir = settings.get::<String>("app.template_directory").unwrap();
+        //     let ioc_struct = ioc::IOC::new(
+        //         source,
+        //         &stage_root,
+        //         &deploy_root,
+        //         &shellbox_root,
+        //         &template_dir,
+        //     )
+        //     .expect("from_list failed");
+        //     stage::stage(&ioc_struct)?;
+        //     Ok(())
+        // }
         None => {
             let error_msg = "no active command, check --help for more information.";
             error!("{} {}", cross!(), error_msg);
