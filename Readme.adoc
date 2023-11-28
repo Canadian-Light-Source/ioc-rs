@@ -23,6 +23,12 @@ After staging, the files will remain on the file system for manual inspection.
 
 Future features might add functionality to probe "PV monitor", or connect to the BMC of bare metal ioc hosts, ...
 
+.animation
+[%collapsible]
+====
+image::ioc_install.gif[animation]
+====
+
 == License
 GPLv3 License
 
