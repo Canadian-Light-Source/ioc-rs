@@ -18,7 +18,7 @@ pub struct Cli {
     pub generator: Option<Shell>,
 
     /// display version
-    #[arg(short, action)]
+    #[arg(short, long = "version", action)]
     pub ver: bool,
 
     /// log level: error, warn, info, debug, trace
