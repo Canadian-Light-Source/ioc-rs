@@ -98,31 +98,33 @@ When specified explicitly, via the `-c` argument or `$IOC_CONFIG_FILE`, the acce
 
 == `ioc install`
 
-Install the ioc-definiton and accompaniing files.
+Install the ioc-definition and accompanying files.
 See `ioc install --help` for more information.
 
-.ioc-definiton-examples
+.ioc-definition-examples
 [%collapsible]
 ====
 [source, shell]
 ----
 MTEST_NIKO01/
 ├── cfg
-│   └── important_config.cfg
+│   └── important_config.cfg
 ├── config.toml
 ├── important_special_stuff.db
 └── startup.iocsh
 
 MTEST_NIKO02/
 ├── db
-│   ├── a_mighty_subsitututions_file.subs
-│   └── my.db
+│   ├── a_mighty_substitutions_file.subs
+│   └── my.db
 └── startup.iocsh
 ----
 ====
 
 === What it does
 Takes at least one directory with ioc-definitions, as explicit path, space separated list of paths or glob, for deployment.
+
+A template for ioc-definitions is available at https://github.lightsource.ca/epics-iocs/ioc_template[here], it can be selected when a new repository is created on github.
 
 .Examples
 [%collapsible]
@@ -160,7 +162,7 @@ IMPORTANT: In order to render a configuration for `shellbox`, a configuration fi
 
 Based on the above examples, the result of the deployment looks something like this:
 
-.deployed-ioc-definiton-examples
+.deployed-ioc-definition-examples
 [%collapsible]
 ====
 [source, shell]
@@ -169,23 +171,23 @@ dev/
 └── deploy
     └── ioc
         ├── data
-        │   ├── MTEST_NIKO01
-        │   │   └── hash
-        │   └── MTEST_NIKO02
-        │       └── hash
+        │   ├── MTEST_NIKO01
+        │   │   └── hash
+        │   └── MTEST_NIKO02
+        │       └── hash
         ├── hosts
-        │   ├── localhost
-        │   │   └── shellbox.conf
-        │   └── vioc2400-112a
-        │       └── shellbox.conf
+        │   ├── localhost
+        │   │   └── shellbox.conf
+        │   └── vioc2400-112a
+        │       └── shellbox.conf
         ├── MTEST_NIKO01
-        │   ├── cfg
-        │   │   └── important_config.cfg
-        │   ├── config.toml
-        │   ├── important_special_stuff.db
-        │   ├── ORIGIN
-        │   ├── startup.iocsh
-        │   └── startup.iocsh_MTEST_NIKO01
+        │   ├── cfg
+        │   │   └── important_config.cfg
+        │   ├── config.toml
+        │   ├── important_special_stuff.db
+        │   ├── ORIGIN
+        │   ├── startup.iocsh
+        │   └── startup.iocsh_MTEST_NIKO01
         └── MTEST_NIKO02
             ├── a_mighty_subsitututions_file.subs
             ├── my.db
