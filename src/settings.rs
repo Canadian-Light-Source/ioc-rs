@@ -7,6 +7,7 @@ use std::{
     env, io,
     path::{Path, PathBuf},
 };
+use tera::Tera;
 
 const IOC_CONFIG_NAME: &str = "ioc.toml";
 const IOC_CONFIG_FILE: &str = "IOC_CONFIG_FILE";
@@ -113,9 +114,16 @@ impl Settings {
 
     pub fn verify(config: &Config) -> Result<(), ConfigError> {
         let template_dir = config.get::<String>("app.template_directory")?;
-        if !Path::new(&template_dir).is_dir() {
+        let tera = match Tera::new(&template_dir) {
+            Ok(t) => t,
+            Err(e) => {
+                error!("Parsing error(s): {}", e);
+                std::process::exit(1);
+            }
+        };
+        if tera.get_template_names().collect::<Vec<_>>().is_empty() {
             return Err(ConfigError::Message(
-                "The specified template path is not a directory".to_string(),
+                "The specified template path does not contain valid templates".to_string(),
             ));
         }
         Ok(())

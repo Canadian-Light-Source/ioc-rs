@@ -6,4 +6,4 @@ shellbox = "dev/deploy/ioc/hosts/"
 [app]
 # can be a glob, e.g. "templates/**/*.tera"
 #template_directory = "templates/**/*.tera"
-template_directory = "/templates/**/*.tera"
+template_directory = "templates/**/*.tera"
