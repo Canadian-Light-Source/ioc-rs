@@ -110,6 +110,16 @@ impl Settings {
         trace!("{} {:?}", tick!(), s);
         Ok(s)
     }
+
+    pub fn verify(config: &Config) -> Result<(), ConfigError> {
+        let template_dir = config.get::<String>("app.template_directory")?;
+        if !Path::new(&template_dir).is_dir() {
+            return Err(ConfigError::Message(
+                "The specified template path is not a directory".to_string(),
+            ));
+        }
+        Ok(())
+    }
 }
 
 #[cfg(test)]
