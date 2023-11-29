@@ -1,4 +1,5 @@
 use std::ffi::OsString;
+use std::path::Path;
 use std::{
     fs::{self, File},
     io::Write,
@@ -63,6 +64,12 @@ fn render_startup_script(ioc: &IOC, template_dir: &str) -> Result<String, Error>
 }
 
 pub fn render_startup(ioc: &IOC, template_dir: &str) -> std::io::Result<()> {
+    if !Path::new(template_dir).is_dir() {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::NotFound,
+            "The specified template path is not a directory.",
+        ));
+    }
     let old = &ioc.stage.join("startup.iocsh");
     let ioc_startup = "startup.iocsh_".to_owned() + &ioc.name;
     let new = &ioc.stage.join(ioc_startup);
