@@ -42,7 +42,7 @@ pub struct IOC {
 impl IOC {
     /// Creates a new IOC structure
     /// should fail if source does not contain at least a 'startup.iocsh'
-    // TODO: implement pre-check
+    /// TODO: implement pre-check
     pub fn new(
         source: impl AsRef<Path>,
         stage_root: impl AsRef<Path>,
