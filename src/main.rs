@@ -7,7 +7,7 @@ use clap::{CommandFactory, Parser};
 
 // logging
 use colored::Colorize;
-use log::{debug, error, info};
+use log::{debug, error, info, trace};
 use simple_logger::SimpleLogger;
 
 // my mods
@@ -25,7 +25,7 @@ mod metadata;
 mod origin;
 pub mod shellbox;
 
-use crate::log_macros::cross;
+use crate::log_macros::{cross, tick};
 use metadata::PackageData;
 
 #[cfg(test)]
@@ -58,6 +58,14 @@ fn main() -> io::Result<()> {
         .unwrap();
 
     let settings = Settings::build(&config_file).unwrap();
+    match Settings::verify(&settings) {
+        Ok(_) => trace!("{} verified {}", tick!(), config_file),
+        Err(e) => {
+            error!("{} config file verification failed with\n {e}!", cross!());
+            exit(1)
+        }
+    };
+
     let crate_info = PackageData::new();
     crate_info.report();
 
