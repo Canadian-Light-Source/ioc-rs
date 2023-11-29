@@ -58,6 +58,9 @@ fn main() -> io::Result<()> {
         .unwrap();
 
     let settings = Settings::build(&config_file).unwrap();
+    /* TODO: This still very sub-optimal. In this early stage, a std::process::exit would do.
+        Maybe the tera instance could be created here already?
+    */
     match Settings::verify(&settings) {
         Ok(_) => trace!("{} verified {}", tick!(), config_file),
         Err(e) => {
