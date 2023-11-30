@@ -7,11 +7,11 @@ use glob::glob;
 use log::{debug, error, info, trace};
 use std::{env, fs, io};
 
-use crate::shellbox::ioc_shellbox;
 use crate::{
     ioc::hash_ioc,
     ioc::IOC,
     log_macros::{cross, exclaim, tick},
+    // shellbox::ioc_shellbox,
     stage,
 };
 
@@ -23,7 +23,7 @@ pub fn ioc_install(
     nodiff: &bool,
     force: &bool,
 ) -> io::Result<()> {
-    let unique_iocs = check_ioc_list(iocs);
+    let unique_iocs = check_ioc_list(iocs)?;
     let stage_root = settings.get::<String>("filesystem.stage").unwrap();
     let deploy_root = settings.get::<String>("filesystem.deploy").unwrap();
     let shellbox_root = settings.get::<String>("filesystem.shellbox").unwrap();
@@ -89,15 +89,12 @@ pub fn ioc_install(
             }
         }
 
-        // TODO: error handler
-        let _ = ioc_shellbox(ioc);
-
         // deployment
         if !dryrun {
             // actual deployment run
             trace!("deploying {}", ioc.name.blue().bold());
             match ioc.deploy() {
-                Ok(_) => info!("{} deployed {}", tick!(), ioc.name.blue()),
+                Ok(_) => debug!("{} deployed {}", tick!(), ioc.name.blue()),
                 Err(e) => error!(
                     "{} deployment of {} failed with: {}",
                     cross!(),
@@ -105,47 +102,35 @@ pub fn ioc_install(
                     e
                 ),
             };
-            match ioc_cleanup(ioc) {
-                Ok(_) => {}
-                Err(e) => error!(
-                    "{} clean up failed for {} with error: {}",
-                    cross!(),
-                    &ioc.name,
-                    e
-                ),
+            /*
+            SHELLBOX REMOVED FOR NOW
+            // TODO: error handler
+            match ioc_shellbox(ioc) {
+                Ok(_) => debug!("{} shellbox.config updated.", tick!()),
+                Err(e) => error!("{}: {e}", cross!()),
             };
-            match remove_dir(Path::new(&stage_root)) {
-                Ok(_) => info!("{} stage root removed", tick!()),
-                Err(e) => {
-                    error!("{} failed to remove stage root with error: {}", cross!(), e)
-                }
-            };
+            */
+            ioc_cleanup(ioc)?;
+            remove_dir(Path::new(&stage_root))?;
         } else {
             // dryrun
             info!("{} was chosen, no deployment", "--dryrun".yellow());
-            match ioc_cleanup(ioc) {
-                Ok(_) => {}
-                Err(e) => error!(
-                    "{} clean up failed for {} with error: {}",
-                    cross!(),
-                    &ioc.name,
-                    e
-                ),
-            };
+            ioc_cleanup(ioc)?;
         }
         trace!("------------");
     }
     Ok(())
 }
 
-fn check_ioc_list(list: &Option<Vec<String>>) -> Vec<String> {
-    match list {
-        Some(l) => filter_duplicates(l.clone()).expect("unable to filter duplicates!"),
+fn check_ioc_list(list: &Option<Vec<String>>) -> io::Result<Vec<String>> {
+    let ioc_list = match list {
+        Some(l) => filter_duplicates(l.clone())?,
         None => {
             debug!("{} empty list of IOCs, using current_dir", exclaim!());
-            filter_duplicates(vec![get_current_dir()]).expect("unable to filter duplicates!")
+            filter_duplicates(vec![get_current_dir()])?
         }
-    }
+    };
+    Ok(ioc_list)
 }
 
 fn get_current_dir() -> String {
@@ -207,7 +192,7 @@ mod tests {
     #[test]
     // check if the first element of the returned vector is a directory.
     fn test_check_ioc_list_empty_list_all() {
-        assert!(Path::new(check_ioc_list(&None).first().unwrap()).is_dir());
+        assert!(Path::new(check_ioc_list(&None).unwrap().first().unwrap()).is_dir());
     }
 
     #[test]

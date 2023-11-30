@@ -7,7 +7,7 @@ use log::{error, info, trace, warn};
 use std::collections::HashMap;
 use std::fs;
 use std::fs::File;
-use std::io::{BufRead, BufReader, Write};
+use std::io::{BufRead, BufReader, ErrorKind, Write};
 use std::path::Path;
 use tera::{Context, Error, Tera};
 
@@ -62,7 +62,10 @@ pub fn ioc_shellbox(ioc: &IOC) -> std::io::Result<()> {
             "not".red(),
             shellbox_config_file
         );
-        return Ok(());
+        return Err(std::io::Error::new(
+            ErrorKind::AlreadyExists,
+            "duplicate in shellbox.conf",
+        ));
     }
     update_hm(&mut hm, port, payload);
 
