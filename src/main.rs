@@ -1,4 +1,4 @@
-use std::io::{self, Error, ErrorKind};
+use std::io::{self, Error};
 
 use std::path::Path;
 use std::process::exit;
@@ -90,7 +90,7 @@ fn main() -> io::Result<()> {
             Ok(())
         }
         Some(Commands::Stage(args)) => {
-            debug!("stage: {:?}", args.ioc);
+            info!("----- {} -----", args.ioc.blue().bold());
             let source = Path::new(&args.ioc);
             let stage_root = match &args.path {
                 Some(p) => {
@@ -102,22 +102,26 @@ fn main() -> io::Result<()> {
             let deploy_root = settings.get::<String>("filesystem.deploy").unwrap();
             let shellbox_root = settings.get::<String>("filesystem.shellbox").unwrap();
             let template_dir = settings.get::<String>("app.template_directory").unwrap();
-            let ioc_struct = ioc::IOC::new(
+            let ioc_struct = match ioc::IOC::new(
                 source,
                 &stage_root,
                 &deploy_root,
                 &shellbox_root,
                 &template_dir,
-            )
-            .expect("from_list failed");
+            ) {
+                Ok(ioc) => ioc,
+                Err(e) => {
+                    error!("{} failed to build IOC with: {}", cross!(), e.red());
+                    return Err(Error::new(std::io::ErrorKind::InvalidData, "invalid list"));
+                }
+            };
             stage::stage(&ioc_struct)?;
             Ok(())
         }
         None => {
             let error_msg = "no active command, check --help for more information.";
             error!("{} {}", cross!(), error_msg);
-            let e = Error::new(ErrorKind::Other, error_msg);
-            Err(e)
+            exit(1);
         }
     }
 }

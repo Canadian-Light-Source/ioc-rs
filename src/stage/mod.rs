@@ -1,32 +1,95 @@
 use std::io;
 
 use colored::Colorize;
-use log::{debug, trace};
+use log::{debug, error, info, warn};
 
+use crate::log_macros::{cross, exclaim};
 use crate::origin::Origin;
 use crate::{file_system, ioc::render, ioc::IOC, log_macros::tick};
 
 pub fn stage(ioc: &IOC) -> io::Result<()> {
-    trace!("staging {}", ioc.name.blue());
-    prep_stage(ioc)?;
-    file_system::copy_recursively(&ioc.source, &ioc.stage)?;
-    trace!(
-        "{} copied {:?} -> {:?}",
-        tick!(),
-        &ioc.source.as_path(),
-        &ioc.stage.as_path()
-    );
-    Origin::new(&ioc.source).write_origin_file(&ioc.stage)?;
-    render::render_startup(ioc, ioc.templates.as_os_str().to_str().unwrap())?;
+    info!("staging {}", ioc.name.blue());
+
+    match prep_stage(ioc) {
+        Ok(_) => debug!("{} stage prepared.", tick!()),
+        Err(e) => {
+            error!(
+                "{} failed to prepare stage with: {}",
+                cross!(),
+                e.to_string().red()
+            );
+            return Err(e);
+        }
+    }
+
+    match file_system::copy_recursively(&ioc.source, &ioc.stage) {
+        Ok(_) => debug!(
+            "{} copied {:?} -> {:?}",
+            tick!(),
+            &ioc.source.as_path(),
+            &ioc.stage.as_path()
+        ),
+        Err(e) => {
+            error!(
+                "{} failed to copy files with: {}",
+                cross!(),
+                e.to_string().red()
+            );
+            return Err(e);
+        }
+    }
+
+    match Origin::new(&ioc.source).write_origin_file(&ioc.stage) {
+        Ok(_) => debug!("{} ORIGIN file written.", tick!()),
+        Err(e) => {
+            error!(
+                "{} failed to write ORIGIN file with: {}",
+                cross!(),
+                e.to_string().red()
+            );
+            return Err(e);
+        }
+    }
+
+    match render::render_startup(ioc, ioc.templates.as_os_str().to_str().unwrap()) {
+        Ok(_) => debug!("{}, startup script rendered.", tick!()),
+        Err(e) => {
+            error!(
+                "{} failed to render startup script with: {}",
+                cross!(),
+                e.to_string().red()
+            );
+            return Err(e);
+        }
+    }
+
     // TODO: Add shellbox here?
-    debug!("{} staging of {:?} complete.", tick!(), ioc.name);
+    info!(
+        "{} staging of {:?} in {:?} complete.",
+        tick!(),
+        ioc.name,
+        ioc.stage
+    );
     Ok(())
 }
 
 fn prep_stage(ioc: &IOC) -> io::Result<()> {
     if ioc.stage.exists() {
-        file_system::remove_dir_contents(&ioc.stage)?; // prep stage directory
-        trace!("{} {:?} removed", tick!(), &ioc.stage.as_path());
+        warn!(
+            "{} stage directory already exists, attempting to fix that.",
+            exclaim!()
+        );
+        match file_system::remove_dir_contents(&ioc.stage) {
+            Ok(_) => debug!("{} {:?} removed", tick!(), &ioc.stage.as_path()),
+            Err(e) => {
+                error!(
+                    "{} error while clearing stage directory: {}",
+                    cross!(),
+                    e.to_string().red()
+                );
+                return Err(e);
+            }
+        };
     }
     Ok(())
 }
