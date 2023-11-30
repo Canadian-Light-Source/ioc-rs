@@ -47,28 +47,32 @@ pub fn ioc_install(
     for ioc in &ioc_list {
         info!("----- {} -----", ioc.name.blue().bold());
         trace!("{:?}", ioc);
-        // temper check
+        // tamper check
         match hash_ioc::check_hash(ioc, force) {
             Ok(_hash) => {}
             Err(e) => {
                 error!(
-                    "{} {}: aborting deployment of {}",
+                    "{} {}: hashing of {} failed. Aborting.",
                     cross!(),
                     e,
                     ioc.name.red().bold()
                 );
-                continue;
+                continue; // skip to next or end
             }
         }
         // staging
         trace!("staging {}", ioc.name.blue().bold());
         match stage::stage(ioc) {
             Ok(_) => {}
-            Err(e) => {
-                error!("{}, staging failed with: {}", cross!(), e);
+            Err(_) => {
+                error!(
+                    "{} failed to stage {}, see above for details about the error. Aborting.",
+                    cross!(),
+                    ioc.name.red().bold()
+                );
                 ioc_cleanup(ioc)?;
                 remove_dir(Path::new(&stage_root))?;
-                continue;
+                continue; // skip to next or end
             }
         }
 
