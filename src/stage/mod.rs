@@ -64,7 +64,12 @@ pub fn stage(ioc: &IOC) -> io::Result<()> {
     }
 
     // TODO: Add shellbox here?
-    info!("{} staging of {:?} complete.", tick!(), ioc.name);
+    info!(
+        "{} staging of {:?} in {:?} complete.",
+        tick!(),
+        ioc.name,
+        ioc.stage
+    );
     Ok(())
 }
 
