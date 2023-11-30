@@ -181,14 +181,17 @@ fn filter_duplicates(paths: Vec<String>) -> io::Result<Vec<String>> {
 
 fn ioc_cleanup(ioc: &IOC) -> io::Result<()> {
     trace!("cleaning up staging directory for {}", &ioc.name);
-    fs::remove_dir_all(&ioc.stage)?;
-    info!("{} cleaning up: removed {:?}", tick!(), &ioc.stage);
+    remove_dir(&ioc.stage)?;
+    info!("{} removed {:?}", tick!(), &ioc.stage);
     Ok(())
 }
 
 fn remove_dir(dir: impl AsRef<Path>) -> io::Result<()> {
     trace!("removing directory {}", dir.as_ref().to_str().unwrap());
-    fs::remove_dir_all(dir)?;
+    match fs::remove_dir_all(dir) {
+        Ok(_) => {}
+        Err(e) => error!("{} {}", cross!(), e),
+    };
     Ok(())
 }
 
