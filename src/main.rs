@@ -86,7 +86,7 @@ fn main() -> io::Result<()> {
                 &args.dryrun,
                 &args.nodiff,
                 &args.force,
-            );
+            )?;
             Ok(())
         }
         Some(Commands::Stage(args)) => {
