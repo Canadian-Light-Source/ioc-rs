@@ -22,7 +22,7 @@ pub fn ioc_install(
     dryrun: &bool,
     nodiff: &bool,
     force: &bool,
-) {
+) -> io::Result<()> {
     let unique_iocs = check_ioc_list(iocs);
     let stage_root = settings.get::<String>("filesystem.stage").unwrap();
     let deploy_root = settings.get::<String>("filesystem.deploy").unwrap();
@@ -64,8 +64,14 @@ pub fn ioc_install(
         trace!("staging {}", ioc.name.blue().bold());
         match stage::stage(ioc) {
             Ok(_) => {}
-            Err(e) => error!("{}, staging failed with: {}", cross!(), e),
+            Err(e) => {
+                error!("{}, staging failed with: {}", cross!(), e);
+                ioc_cleanup(ioc)?;
+                remove_dir(Path::new(&stage_root))?;
+                continue;
+            }
         }
+
         if ioc.destination.exists() && !*nodiff {
             // hah, not nodiff, like a proper Bavarian :)
             match ioc.diff_ioc() {
@@ -125,6 +131,7 @@ pub fn ioc_install(
         }
         trace!("------------");
     }
+    Ok(())
 }
 
 fn check_ioc_list(list: &Option<Vec<String>>) -> Vec<String> {
