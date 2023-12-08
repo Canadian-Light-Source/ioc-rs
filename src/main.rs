@@ -7,7 +7,7 @@ use clap::{CommandFactory, Parser};
 
 // logging
 use colored::Colorize;
-use log::{debug, error, info, trace};
+use log::{debug, error, info, trace, warn};
 use simple_logger::SimpleLogger;
 
 // my mods
@@ -87,6 +87,43 @@ fn main() -> io::Result<()> {
                 &args.nodiff,
                 &args.force,
             )?;
+            Ok(())
+        }
+        Some(Commands::Uninstall(args)) => {
+            let source = Path::new(&args.ioc);
+            let stage_root = settings.get::<String>("filesystem.stage").unwrap();
+            let deploy_root = settings.get::<String>("filesystem.deploy").unwrap();
+            let shellbox_root = settings.get::<String>("filesystem.shellbox").unwrap();
+            let template_dir = settings.get::<String>("app.template_directory").unwrap();
+            let ioc_struct = match ioc::IOC::new(
+                source,
+                &stage_root,
+                &deploy_root,
+                &shellbox_root,
+                &template_dir,
+            ) {
+                Ok(ioc) => ioc,
+                Err(e) => {
+                    error!("{} failed to build IOC with: {}", cross!(), e.red());
+                    return Err(Error::new(std::io::ErrorKind::InvalidData, "invalid list"));
+                }
+            };
+            let message = format!("\
+            Uninstalling IOCs is not yet supported. Follow the steps below for manual uninstallation\n\
+            To uninstall >>{}<< you need to:\n\
+              - remove the line for port {} in {}{}/shellbox.conf\n\
+              - run the command \'shellbox reload\' on {}\n\
+              - delete {}{}",
+                &args.ioc.red().bold(),
+                &ioc_struct.config.ioc.port,
+                &shellbox_root,
+                &ioc_struct.config.ioc.host,
+                &ioc_struct.config.ioc.host,
+                &deploy_root,
+                &ioc_struct.name,
+            );
+            warn!("command: <{}>", "uninstall".yellow());
+            warn!("{message}");
             Ok(())
         }
         Some(Commands::Stage(args)) => {

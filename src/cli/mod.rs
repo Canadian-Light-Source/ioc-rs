@@ -61,6 +61,8 @@ impl Cli {
 pub enum Commands {
     /// deploy one or more ioc definitions
     Install(InstallCommand),
+    /// uninstall ioc definitions
+    Uninstall(UninstallCommand),
     /// stage a single ioc definition (for development and testing)
     Stage(StageCommand),
 }
@@ -82,6 +84,13 @@ pub struct InstallCommand {
     /// list of IOCs to deploy, space separated
     #[clap(value_parser, num_args = 1.., value_delimiter = ' ')]
     pub iocs: Option<Vec<String>>,
+}
+
+#[derive(Args, Debug, Clone, PartialEq)]
+pub struct UninstallCommand {
+    /// single IOCs to stage
+    #[clap(value_hint = ValueHint::DirPath)]
+    pub ioc: String,
 }
 
 #[derive(Args, Debug, Clone, PartialEq)]
