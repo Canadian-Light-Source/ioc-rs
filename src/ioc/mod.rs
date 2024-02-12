@@ -135,7 +135,6 @@ impl IOC {
             file_system::remove_dir_contents(&self.destination)?; // prep deploy directory
             trace!("{} removed {:?}", tick!(), &self.destination);
         }
-        hash_ioc::hash_ioc(self)?;
         file_system::copy_recursively(&self.stage, &self.destination)?;
         trace!(
             "{} copied {:?} -> {:?}",
@@ -143,6 +142,7 @@ impl IOC {
             &self.stage.as_path(),
             &self.destination.as_path()
         );
+        hash_ioc::hash_ioc(self)?;
         debug!(
             "{} deployment of {:?} to {:?} complete.",
             tick!(),
