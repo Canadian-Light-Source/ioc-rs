@@ -1,3 +1,6 @@
+use crate::log_macros::exclaim;
+use colored::Colorize;
+use log::warn;
 use std::path::Path;
 use std::{fs, io};
 
@@ -21,9 +24,30 @@ pub fn copy_recursively(source: impl AsRef<Path>, destination: impl AsRef<Path>)
     fs::create_dir_all(&destination)?;
     for entry in fs::read_dir(source)? {
         let entry = entry?;
+        // prevent recursion if destination is in the source directory
+        if entry.file_name().into_string().unwrap().contains(
+            destination
+                .as_ref()
+                .parent()
+                .unwrap()
+                .as_os_str()
+                .to_str()
+                .unwrap(),
+        ) {
+            warn!(
+                "{} skipping recursion: {:?} --> {:?}",
+                exclaim!(),
+                &entry.path(),
+                &destination.as_ref().parent().unwrap()
+            );
+            continue;
+        }
+
+        // skip hidden files and directories
         if entry.file_name().into_string().unwrap().starts_with('.') {
             continue;
         }
+
         let filetype = entry.file_type()?;
         if filetype.is_dir() {
             if entry.file_name().into_string().unwrap() == "cfg" {
