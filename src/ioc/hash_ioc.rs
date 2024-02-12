@@ -19,7 +19,7 @@ use crate::{
  * Save to destination directory / data
 */
 pub fn hash_ioc(ioc: &IOC) -> io::Result<()> {
-    let hash = get_directory_hash(&ioc.destination);
+    let hash = get_directory_hash(&ioc.destination)?;
     trace!("hash: {:?}", hash);
     fs::create_dir_all(&ioc.data)?;
     let mut file = File::create(&ioc.hash_file)?;
@@ -33,13 +33,14 @@ pub fn hash_ioc(ioc: &IOC) -> io::Result<()> {
 }
 
 /// obtain directory hash
-fn get_directory_hash(dir: impl AsRef<Path>) -> String {
+fn get_directory_hash(dir: impl AsRef<Path>) -> io::Result<String> {
     let mut hash = Blake2s256::new();
-    get_hash_folder(dir.as_ref(), &mut hash, 1, |_| {}).unwrap()
+    let dir_hash = get_hash_folder(dir.as_ref(), &mut hash, 1, |_| {});
+    dir_hash
 }
 
 /// check whether destination has been tempered with
-pub fn check_hash(ioc: &IOC, force: &bool) -> Result<String, String> {
+pub fn check_hash(ioc: &IOC, force: &bool) -> io::Result<String> {
     // destination doesn't exist yet, that's fine
     if !ioc.destination.exists() {
         return Ok("destination does not yet exist. No hash expected.".to_string());
@@ -51,7 +52,8 @@ pub fn check_hash(ioc: &IOC, force: &bool) -> Result<String, String> {
         };
     }
 
-    let valid_hash = match hash == get_directory_hash(&ioc.destination) {
+    let destination_hash = get_directory_hash(&ioc.destination)?;
+    let valid_hash = match hash == destination_hash {
         false => {
             return if *force {
                 warn!(
@@ -68,8 +70,8 @@ pub fn check_hash(ioc: &IOC, force: &bool) -> Result<String, String> {
                     "ioc install --force".yellow(),
                     &ioc.name.yellow()
                 );
-                Err("hash mismatch!".to_string())
-            }
+                Err(io::Error::new(io::ErrorKind::InvalidData, "hash mismatch!"))
+            };
         }
         true => {
             info!("{} valid hash for {} |{}|", tick!(), &ioc.name.blue(), hash);
@@ -135,7 +137,7 @@ mod tests {
     fn test_hash_directory() {
         let dir = Path::new("./tests/hash_test");
         assert_eq!(
-            get_directory_hash(dir),
+            get_directory_hash(dir).unwrap(),
             "55a81f37ab0965a40965b1e8dcef732bca39eb0ef66170056f586a800acff8ee"
         );
     }
