@@ -19,7 +19,7 @@ use crate::{
  * Save to destination directory / data
 */
 pub fn hash_ioc(ioc: &IOC) -> io::Result<()> {
-    let hash = get_directory_hash(&ioc.stage);
+    let hash = get_directory_hash(&ioc.destination);
     trace!("hash: {:?}", hash);
     fs::create_dir_all(&ioc.data)?;
     let mut file = File::create(&ioc.hash_file)?;
