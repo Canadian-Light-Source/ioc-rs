@@ -145,7 +145,8 @@ mod tests {
         let test_ioc = new_test_ioc("./tests/UTEST_IOC01").unwrap();
         std::fs::create_dir_all(&test_ioc.data)?;
         std::fs::create_dir_all(&test_ioc.stage)?;
-        std::fs::write(test_ioc.stage.join("file1.txt"), "hash test")?;
+        std::fs::create_dir_all(&test_ioc.destination)?;
+        std::fs::write(test_ioc.destination.join("file1.txt"), "hash test")?;
 
         assert!(hash_ioc(&test_ioc).is_ok());
         // the actual check
