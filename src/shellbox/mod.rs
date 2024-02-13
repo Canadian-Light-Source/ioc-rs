@@ -17,7 +17,7 @@ const SHELLBOX_CONFIG_FILE: &str = "shellbox.conf";
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 struct ShellBoxConfig {
     host: String,
-    port: u32,
+    port: u16,
     user: String,
     name: String,
     command: String,

@@ -7,7 +7,7 @@ use serde_derive::Deserialize;
 #[derive(Debug, Deserialize, Clone)]
 #[allow(unused)]
 pub struct IocConfig {
-    pub port: u32,
+    pub port: u16,
     pub host: String,
     pub user: Option<String>,
     pub base_dir: Option<String>,
