@@ -25,11 +25,13 @@ pub struct Settings {
 impl Settings {
     pub fn build(config_file: &str) -> Result<Config, ConfigError> {
         let mut s = Config::builder()
-            .set_default("ioc.user", "control")
+            .set_default("ioc.user", "control2")
             .unwrap()
             .set_default("ioc.port", "0")
             .unwrap()
             .set_default("ioc.host", "localhost")
+            .unwrap()
+            .set_default("ioc.command", "iocsh")
             .unwrap()
             // local dev configuration
             .add_source(File::with_name(config_file).required(false))

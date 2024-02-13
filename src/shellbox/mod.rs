@@ -1,39 +1,49 @@
-use crate::{
-    ioc::IOC,
-    log_macros::{cross, exclaim, tick},
-};
-use colored::Colorize;
-use log::{error, info, trace, warn};
-use std::collections::HashMap;
-use std::fs;
-use std::fs::File;
-use std::io::{BufRead, BufReader, ErrorKind, Write};
-use std::path::Path;
-use tera::{Context, Error, Tera};
+// use crate::{
+//     ioc::IOC,
+//     log_macros::{cross, exclaim, tick},
+// };
+// use colored::Colorize;
+// use log::{error, info, trace, warn};
+use crate::ioc::IOC;
+// use std::collections::HashMap;
+// use std::fs;
+// use std::fs::File;
+// use std::io::{BufRead, BufReader, ErrorKind, Write};
+// use std::path::Path;
+// use tera::{Context, Error, Tera};
 
 const SHELLBOX_CONFIG_FILE: &str = "shellbox.conf";
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 struct ShellBoxConfig {
-    host: &'static str,
-    port: u16,
-    user: &'static str,
-    name: &'static str,
-    command: &'static str,
-    procserv_opts: &'static str,
-    network: &'static str,
+    host: String,
+    port: u32,
+    user: String,
+    name: String,
+    command: String,
+    procserv_opts: String,
 }
 
 impl ShellBoxConfig {
     pub fn new() -> Self {
-        let sbc: Self = Default::default();
-        sbc
+        Default::default()
+    }
+
+    pub fn from_ioc(ioc: &IOC) -> Self {
+        ShellBoxConfig {
+            host: ioc.config.ioc.host.to_owned(),
+            port: ioc.config.ioc.port,
+            user: ioc.config.ioc.user.to_owned().unwrap_or_default(),
+            name: ioc.name.to_owned(),
+            command: ioc.config.ioc.command.to_owned().unwrap_or_default(),
+            procserv_opts: ioc.config.ioc.procserv_opts.to_owned().unwrap_or_default(),
+        }
     }
 }
 // #[derive(Debug)]
-pub struct Shellbox {
-    configs: HashMap<u16, HashMap<&'static str, Vec<&'static str>>>,
-}
+// pub struct Shellbox {
+//     configs: HashMap<u16, HashMap<&'static str, Vec<&'static str>>>,
+// }
 // impl Shellbox {
 //     pub fn new<P: AsRef<Path>>(dir: P) -> std::io::Result<Self> {
 //         Ok(Shellbox {
@@ -192,14 +202,14 @@ pub struct Shellbox {
 //     hashmap
 // }
 
-/// get key value pair from shellbox configuration line
-fn get_kv_pair(line: &str) -> (u16, Vec<&str>) {
-    let fields: Vec<&str> = line.split(',').collect();
-
-    let key = fields[0].trim_start().parse::<u16>().unwrap_or_default();
-    let payload = fields[1..].iter().map(|&x| x.trim()).collect();
-    (key, payload)
-}
+// get key value pair from shellbox configuration line
+// fn get_kv_pair(line: &str) -> (u16, Vec<&str>) {
+//     let fields: Vec<&str> = line.split(',').collect();
+//
+//     let key = fields[0].trim_start().parse::<u16>().unwrap_or_default();
+//     let payload = fields[1..].iter().map(|&x| x.trim()).collect();
+//     (key, payload)
+// }
 //
 // /// update the hashmap, modify existing entry, or add new
 // fn update_hm(hashmap: &mut HashMap<String, Vec<String>>, key: String, payload: Vec<String>) {
@@ -247,12 +257,17 @@ fn get_kv_pair(line: &str) -> (u16, Vec<&str>) {
 //         .iter()
 //         .any(|(key, value)| (value == payload) && (key != port))
 // }
-
+//
 #[cfg(test)]
 mod tests {
+    use crate::ioc::IOC;
+    use crate::settings::Settings;
     use crate::shellbox;
-    use std::io;
+    // use std::io;
+    use std::path::Path;
     use tempfile::tempdir;
+    // use std::io;
+    // use tempfile::tempdir;
 
     // #[test]
     // fn create_shellbox() -> io::Result<()> {
@@ -261,21 +276,71 @@ mod tests {
     //     Ok(())
     // }
 
-    #[test]
-    fn get_kv_pair() {
-        let input = " 12345,kiveln, /ioc/MTEST-counter02,    iocsh -7.0.7, -n MTEST-counter02 startup.script, -w -l 50001 foo bar 1@%$/*()";
-        let (k, v) = shellbox::get_kv_pair(input);
-        assert_eq!(k, 12345);
-        assert_eq!(v[0], "kiveln");
-        assert_eq!(v[1], "/ioc/MTEST-counter02");
-        assert_eq!(v[2], "iocsh -7.0.7");
-    }
+    // #[test]
+    // fn get_kv_pair() {
+    //     let input = " 12345,kiveln, /ioc/MTEST-counter02,    iocsh -7.0.7, -n MTEST-counter02 startup.script, -w -l 50001 foo bar 1@%$/*()";
+    //     let (k, v) = shellbox::get_kv_pair(input);
+    //     assert_eq!(k, 12345);
+    //     assert_eq!(v[0], "kiveln");
+    //     assert_eq!(v[1], "/ioc/MTEST-counter02");
+    //     assert_eq!(v[2], "iocsh -7.0.7");
+    // }
     #[test]
     fn new_shellboxconfig() {
+        let config = shellbox::ShellBoxConfig::new();
+        assert_eq!(config.host, "");
+        assert_eq!(config.port, 0u16);
+        assert_eq!(config.user, "");
+        assert_eq!(config.name, "");
+        assert_eq!(config.command, "");
+        assert_eq!(config.procserv_opts, "");
+    }
+
+    #[test]
+    fn mut_shellboxconfig() {
         let mut config = shellbox::ShellBoxConfig::new();
-        println!("{:?}", config);
-        config.name = "shellbox";
-        config.port = 10001;
-        println!("{:?}", config);
+
+        config.host = "localhost".to_owned();
+        config.port = 10001u16;
+        config.user = "nobody".to_owned();
+        config.name = "MTEST-10001".to_owned();
+        config.command = "iocsh".to_owned();
+        config.procserv_opts = "--allow -w".to_owned();
+
+        assert_eq!(config.host, "localhost");
+        assert_eq!(config.port, 10001);
+        assert_eq!(config.user, "nobody");
+        assert_eq!(config.name, "MTEST-10001");
+        assert_eq!(config.command, "iocsh");
+        assert_eq!(config.procserv_opts, "--allow -w");
+    }
+
+    #[test]
+    fn from_ioc_shellboxconfig() -> std::io::Result<()> {
+        let settings = Settings::build("./tests/config/test_stage.toml").unwrap();
+        let template_dir = settings.get::<String>("app.template_directory").unwrap();
+
+        let temp_dir = tempdir()?;
+        let stage_dir = temp_dir.path().join("stage");
+        let dest_dir = temp_dir.path().join("dest");
+        let shellbox_root = temp_dir.path().join("shellbox");
+
+        let test_ioc = IOC::new(
+            Path::new("./tests/UTEST_IOC01"),
+            stage_dir,
+            dest_dir,
+            shellbox_root,
+            template_dir,
+        )
+        .unwrap();
+
+        let config = shellbox::ShellBoxConfig::from_ioc(&test_ioc);
+        assert_eq!(config.host, "iochost");
+        assert_eq!(config.port, 12345);
+        assert_eq!(config.user, "control2");
+        assert_eq!(config.name, "UTEST_IOC01");
+        assert_eq!(config.command, "iocsh");
+        assert_eq!(config.procserv_opts, "");
+        Ok(())
     }
 }
