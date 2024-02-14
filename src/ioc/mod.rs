@@ -12,7 +12,7 @@ use crate::{
 
 mod diff;
 pub mod hash_ioc;
-mod ioc_config;
+pub(crate) mod ioc_config;
 pub mod render;
 
 /// IOC structure

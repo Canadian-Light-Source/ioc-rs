@@ -11,8 +11,7 @@ use crate::{
     ioc::hash_ioc,
     ioc::IOC,
     log_macros::{cross, exclaim, tick},
-    // shellbox::ioc_shellbox,
-    stage,
+    shellbox, stage,
 };
 
 // TODO: move to function
@@ -102,14 +101,16 @@ pub fn ioc_install(
                     e
                 ),
             };
-            /*
-            SHELLBOX REMOVED FOR NOW
-            // TODO: error handler
-            match ioc_shellbox(ioc) {
-                Ok(_) => debug!("{} shellbox.config updated.", tick!()),
-                Err(e) => error!("{}: {e}", cross!()),
-            };
-            */
+
+            // render shellbox configuration line to std_out
+            match shellbox::ShellBoxConfig::from_ioc(ioc).render_shellbox_line() {
+                Ok(config_line) => println!(
+                    "add this to the shellbox config of the IOC-host:\n\t{}",
+                    config_line
+                ),
+                Err(e) => error!("{}, {}", cross!(), e),
+            }
+
             ioc_cleanup(ioc)?;
             remove_dir(Path::new(&stage_root))?;
         } else {
