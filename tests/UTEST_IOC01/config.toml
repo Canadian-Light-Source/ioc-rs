@@ -13,10 +13,10 @@ port = "12345"
 #    user = "kiveln"
 ## INSTALLDIR: default '<ioc_root>/${IOC}'
 #    base_dir = "/tmp"
-## DAEMON: default '${IOC}'
-#    name = "MTEST-NIKO30001"
-## COMMAND: default 'iocsh -n ${IOC}'
-#    command = "iocsh -3 -r iocStats"
+## COMMAND: default 'iocsh'
+#    command = "myIocshWrapper"
+## COMMAND: default ''
+#    command_args = "-3 -r iocStats"
 ## PROCSERV_OPTS
 #    procserv_opts = ""
 ## NETWORK

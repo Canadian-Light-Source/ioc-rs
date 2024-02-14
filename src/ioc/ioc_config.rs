@@ -4,16 +4,17 @@ use config::{Config, ConfigError, File};
 use log::{error, warn};
 use serde_derive::Deserialize;
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Default)]
 #[allow(unused)]
 pub struct IocConfig {
-    pub port: u32,
+    pub port: u16,
     pub host: String,
-    pub user: Option<String>,
+    pub user: String,
     pub base_dir: Option<String>,
-    pub name: Option<String>,
-    pub procserv_opts: Option<String>,
-    pub command: Option<String>,
+    pub command: String,
+    pub command_args: String,
+    // pub name: Option<String>,
+    pub procserv_opts: String,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -25,11 +26,17 @@ pub struct Settings {
 impl Settings {
     pub fn build(config_file: &str) -> Result<Config, ConfigError> {
         let mut s = Config::builder()
-            .set_default("ioc.user", "control")
-            .unwrap()
             .set_default("ioc.port", "0")
             .unwrap()
             .set_default("ioc.host", "localhost")
+            .unwrap()
+            .set_default("ioc.user", "control2")
+            .unwrap()
+            .set_default("ioc.command", "iocsh")
+            .unwrap()
+            .set_default("ioc.command_args", "startup.iocsh")
+            .unwrap()
+            .set_default("ioc.procserv_opts", "")
             .unwrap()
             // local dev configuration
             .add_source(File::with_name(config_file).required(false))
