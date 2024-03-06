@@ -1,0 +1,10 @@
+# system default configuration for production `ioc`
+# this file is mandatory and needs to placed in `/opt/apps/ioc/config/`
+[filesystem]
+stage = "/tmp/ioc/stage/"
+deploy = "/opt/ioc/"
+shellbox = "/opt/ioc/hosts/"
+
+[app]
+# can be a glob, e.g. "templates/**/*.tera"
+template_directory = "/etc/ioc/templates/*.tera"

@@ -14,7 +14,8 @@ use log::LevelFilter;
 )]
 pub struct Cli {
     /// shell tab complete generator
-    #[arg(long = "generate_shell_completion", value_enum, hide = true)]
+    // #[arg(long = "generate_shell_completion", value_enum, hide = true)]
+    #[arg(long = "generate_shell_completion", value_enum)]
     pub generator: Option<Shell>,
 
     /// display version

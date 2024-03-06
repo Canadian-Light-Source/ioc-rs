@@ -1,0 +1,5 @@
+#!/bin/sh
+
+set -e
+
+/usr/bin/ioc --generate_shell_completion bash > /etc/bash_completion.d/ioc.bash

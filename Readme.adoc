@@ -14,12 +14,11 @@
 
 This tool allows you to deploy IOC applications.
 Currently, the tool is only available for testing.
-The deployment will write to `./deploy/ioc/${IOC}`.
-At deployment a hash will be generated and stored in `./deploy/ioc/data/${IOC}/hash`
+The deployment will write to `./deploy/ioc/$+{IOC}+`.
+At deployment a hash will be generated and stored in `./deploy/ioc/data/$+{IOC}+/hash`
 
 For testing, a pure staging can be performed.
 After staging, the files will remain on the file system for manual inspection.
-
 
 Future features might add functionality to probe "PV monitor", or connect to the BMC of bare metal ioc hosts, ...
 
@@ -30,6 +29,7 @@ image::ioc_install.gif[animation]
 ====
 
 == License
+
 GPLv3 License
 
 == Prerequisites
@@ -39,7 +39,7 @@ GPLv3 License
 .default-config
 [%collapsible]
 ====
-[source, toml]
+[source,toml]
 ----
 # system default configuration for `ioc`
 # this file is mandatory and needs to placed in search path or provided as argument.
@@ -58,13 +58,14 @@ template_directory = "/opt/apps/ioc/templates/*.tera"
 == `ioc`
 
 === Help
+
 The main, as well as the sub-commands have a `--help` argument.
 Please make use of this.
 
 .ioc-help
 [%collapsible]
 ====
-[source, shell]
+[source,shell]
 ----
 $ ioc --help
 Tool for the deployment of ioc definitions
@@ -86,10 +87,12 @@ Options:
 ====
 
 === Log level
+
 The log level is set to "info" by default.
 Less logging can be achieved with `--log-level error`, higher levels are achieved with `debug` and `trace`, respectively.
 
 === Configuration
+
 The config file is either explicitly specified with the `-c <FILE>` argument, or searched for in these places, in this sequence:
 
 * `$IOC_CONFIG_FILE`
@@ -110,7 +113,7 @@ See `ioc install --help` for more information.
 .ioc-definition-examples
 [%collapsible]
 ====
-[source, shell]
+[source,shell]
 ----
 MTEST_NIKO01/
 ├── cfg
@@ -128,6 +131,7 @@ MTEST_NIKO02/
 ====
 
 === What it does
+
 Takes at least one directory with ioc-definitions, as explicit path, space separated list of paths or glob, for deployment.
 
 A template for ioc-definitions is available at https://github.lightsource.ca/epics-iocs/ioc_template[here], it can be selected when a new repository is created on github.
@@ -137,32 +141,32 @@ A template for ioc-definitions is available at https://github.lightsource.ca/epi
 ====
 
 .single-directory
-[source, shell]
+[source,shell]
 ----
 ioc install MTEST_NIKO01
 ioc install MTEST_NIKO02
 ----
 
 .list-of-directories
-[source, shell]
+[source,shell]
 ----
 ioc install MTEST_NIKO01 MTEST_NIKO02
 ----
 
 .glob
-[source, shell]
+[source,shell]
 ----
 ioc install MTEST_*
 ----
 ====
 
-
-
 NOTE: The source directory may contain sub-directories, those are flattened for deployment, except for a `cfg` directory.
 
 NOTE: Hidden directories and files, e.g. `.foo`, will _not_ be deployed.
 
-IMPORTANT: In order to render a configuration for `shellbox`, a configuration file named `config` must be present in the root directory. The configuration file can be "toml, yaml or json". Without the configuration file, the command will fail with an error.
+IMPORTANT: In order to render a configuration for `shellbox`, a configuration file named `config` must be present in the root directory.
+The configuration file can be "toml, yaml or json".
+Without the configuration file, the command will fail with an error.
 
 === Result
 
@@ -171,7 +175,7 @@ Based on the above examples, the result of the deployment looks something like t
 .deployed-ioc-definition-examples
 [%collapsible]
 ====
-[source, shell]
+[source,shell]
 ----
 dev/
 └── deploy
@@ -203,7 +207,7 @@ dev/
 ----
 ====
 
----
+'''
 
 == `ioc stage`
 
@@ -227,13 +231,26 @@ ioc stage -p STAGE_TEST MTEST_NIKO01/
 4. skip if mismatch (override with `--force`)
 
 ==== Stage deployment
+
 1. find source directory
 2. copy source to staging directory
 3. do the startup wrapping via a template
 
 ==== Deployment
+
 1. calculate the checksum and write to the destination
 2. copy from staging directory to deploy directory
+
+== Debian package
+
+The easiest is to build the debian package with docker.
+A `Dockerfile` is provided that copies all the necessary files into a container and builds the Rust executable.
+In an additional step, the Debian package is build.
+
+====
+[source,shell]
+docker buildx build --output type=local,dest=/tmp/deb-package/ .
+====
 
 == TODO
 
@@ -241,3 +258,4 @@ ioc stage -p STAGE_TEST MTEST_NIKO01/
 - test
 - refactor to move functions to separate mods [implemented]
 - UUID for pvmonitor
+- link debian package version to Cargo.toml
