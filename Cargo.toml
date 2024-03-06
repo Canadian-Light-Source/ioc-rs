@@ -8,6 +8,10 @@ keywords = ["CLS", "deployment", "ioc", "tools"]
 repository = "https://github.lightsource.ca/epics-iocs/ioc/"
 edition = "2021"
 
+[[bin]] # ioc
+name = "ioc"
+path = "src/main.rs"
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]

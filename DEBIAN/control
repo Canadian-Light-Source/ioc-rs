@@ -1,0 +1,7 @@
+Package: ioc
+Version: 0.19.6
+Section: custom
+Priority: optional
+Architecture: amd64
+Maintainer: Niko Kivel <niko.kivel@lightsource.ca>
+Description: deploy tool for IOC definitions

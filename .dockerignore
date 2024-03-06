@@ -1,0 +1,10 @@
+# Rust target
+*/target
+
+# test IOCs
+*/MTEST*
+
+# foo
+sandbox
+ansible
+.vscode
