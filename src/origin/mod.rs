@@ -35,7 +35,7 @@ impl Origin {
         let mut origin: Origin = Default::default();
         origin.directory = dir.as_ref().canonicalize().unwrap_or_default();
 
-        if let Ok(repo) = Repository::open(dir) {
+        if let Ok(repo) = Repository::discover(dir) {
             // Print the branch name
             if let Ok(head) = repo.head() {
                 if let Some(name) = head.shorthand() {
