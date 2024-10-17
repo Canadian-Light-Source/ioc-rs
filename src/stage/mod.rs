@@ -5,7 +5,8 @@ use log::{debug, error, info, warn};
 
 use crate::log_macros::{cross, exclaim};
 use crate::origin::Origin;
-use crate::{file_system, ioc::render, ioc::IOC, log_macros::tick};
+use crate::{file_system, ioc::IOC, log_macros::tick};
+pub mod render;
 
 pub fn stage(ioc: &IOC) -> io::Result<()> {
     info!("staging {}", ioc.name.blue());

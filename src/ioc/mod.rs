@@ -13,7 +13,6 @@ use crate::{
 mod diff;
 pub mod hash_ioc;
 pub(crate) mod ioc_config;
-pub mod render;
 
 /// IOC structure
 #[derive(Debug, Clone)]
