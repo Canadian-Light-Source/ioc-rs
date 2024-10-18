@@ -139,20 +139,19 @@ fn main() -> io::Result<()> {
             let deploy_root = settings.get::<String>("filesystem.deploy").unwrap();
             let shellbox_root = settings.get::<String>("filesystem.shellbox").unwrap();
             let template_dir = settings.get::<String>("app.template_directory").unwrap();
-            let ioc_struct = match ioc::IOC::new(
+            match ioc::IOC::new(
                 source,
                 &stage_root,
                 &deploy_root,
                 &shellbox_root,
                 &template_dir,
             ) {
-                Ok(ioc) => ioc,
+                Ok(ioc) => stage::stage(&ioc)?,
                 Err(e) => {
                     error!("{} failed to build IOC with: {}", cross!(), e.red());
-                    return Err(Error::new(std::io::ErrorKind::InvalidData, "invalid list"));
+                    // return Err(Error::new(std::io::ErrorKind::InvalidData, "invalid list"));
                 }
             };
-            stage::stage(&ioc_struct)?;
             Ok(())
         }
         None => {

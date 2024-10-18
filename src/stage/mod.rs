@@ -3,6 +3,7 @@ use std::io;
 use colored::Colorize;
 use log::{debug, error, info, warn};
 
+use crate::ioc::IocType;
 use crate::log_macros::{cross, exclaim};
 use crate::origin::Origin;
 use crate::{file_system, ioc::IOC, log_macros::tick};
@@ -51,20 +52,24 @@ pub fn stage(ioc: &IOC) -> io::Result<()> {
             return Err(e);
         }
     }
-
-    match render::render_startup(ioc, ioc.templates.as_os_str().to_str().unwrap()) {
-        Ok(_) => debug!("{}, startup script rendered.", tick!()),
-        Err(e) => {
-            error!(
-                "{} failed to render startup script with: {}",
-                cross!(),
-                e.to_string().red()
-            );
-            return Err(e);
+    
+    match ioc.ioc_type {
+        IocType::Compiled => {
+            match render::render_startup(ioc, ioc.templates.as_os_str().to_str().unwrap()) {
+                Ok(_) => debug!("{}, startup script rendered.", tick!()),
+                Err(e) => {
+                    error!(
+                        "{} failed to render startup script with: {}",
+                        cross!(),
+                        e.to_string().red()
+                    );
+                    return Err(e);
+                }
+            }
         }
+        _ => {}
     }
 
-    // TODO: Add shellbox here?
     info!(
         "{} staging of {:?} in {:?} complete.",
         tick!(),

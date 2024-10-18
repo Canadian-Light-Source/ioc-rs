@@ -95,7 +95,7 @@ pub struct UninstallCommand {
 
 #[derive(Args, Debug, Clone, PartialEq)]
 pub struct StageCommand {
-    /// single IOCs to stage
+    /// single IOC DIRECTORY to stage
     #[clap(value_hint = ValueHint::DirPath)]
     pub ioc: String,
     /// optional staging directory

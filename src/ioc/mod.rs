@@ -114,8 +114,9 @@ impl IOC {
             }
             false => {
                 error!(
-                    "{} IOC source directory not found.",
+                    "{} IOC source directory not found: {}",
                     cross!(),
+                    source.as_ref().display()
                 );
                 Err("Could not find source directory of IOC.")
             }
