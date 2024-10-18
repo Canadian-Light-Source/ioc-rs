@@ -3,8 +3,10 @@ use std::path::{Path, PathBuf};
 
 // logging
 use colored::Colorize;
-use log::{debug, error, trace};
+use log::{debug, error, trace, warn};
+use glob::glob;
 
+use crate::log_macros::exclaim;
 use crate::{
     file_system,
     log_macros::{cross, tick},
@@ -13,6 +15,12 @@ use crate::{
 mod diff;
 pub mod hash_ioc;
 pub(crate) mod ioc_config;
+
+#[derive(Debug, Clone)]
+pub enum IocType {
+    Python,
+    Compiled,
+}
 
 /// IOC structure
 #[derive(Debug, Clone)]
@@ -35,12 +43,14 @@ pub struct IOC {
     pub config: ioc_config::Settings,
     /// template directory
     pub templates: PathBuf,
+    /// ioc type (python or c/c++ based)
+    pub ioc_type: IocType,
 }
 
 /// IOC structure implementation
 impl IOC {
     /// Creates a new IOC structure
-    /// should fail if source does not contain at least a 'startup.iocsh'
+    /// should fail if source does not contain at least a 'startup.iocsh' or python code
     /// TODO: implement pre-check
     pub fn new(
         source: impl AsRef<Path>,
@@ -74,28 +84,43 @@ impl IOC {
                 panic!("{:?}", e);
             }
         };
-        // check source exists
+
+        // check source directory exists
         match source.as_ref().is_dir() {
-            true => Ok(IOC {
-                name,
-                source: source.as_ref().to_path_buf(),
-                stage,
-                data,
-                hash_file,
-                destination,
-                shellbox_root: shellbox_root.as_ref().to_path_buf(),
-                config,
-                templates: template_root.as_ref().to_path_buf(),
-            }),
+            true => {
+                match check_ioc_type(&source){
+                    None => {
+                        warn!(
+                            "{} IOC source not found.",
+                            exclaim!(),
+                        );
+                        Err("Could not find source of IOC.")
+                    },
+                    Some(ioctype) => {
+                        Ok(IOC {
+                        name,
+                        source: source.as_ref().to_path_buf(),
+                        stage,
+                        data,
+                        hash_file,
+                        destination,
+                        shellbox_root: shellbox_root.as_ref().to_path_buf(),
+                        config,
+                        templates: template_root.as_ref().to_path_buf(),
+                        ioc_type: ioctype,
+                        })
+                    } 
+                }
+            }
             false => {
-                println!(
-                    "{} IOC source not found. {}",
+                error!(
+                    "{} IOC source directory not found.",
                     cross!(),
-                    source.as_ref().to_string_lossy()
                 );
-                Err("Could not find source of IOC.")
+                Err("Could not find source directory of IOC.")
             }
         }
+
     }
 
     pub fn from_list(
@@ -107,17 +132,26 @@ impl IOC {
     ) -> Vec<Self> {
         debug!("collecting iocs ...");
         list.iter()
-            .map(|source| {
-                trace!("source dir: {:?}", source);
+            .filter_map(|source| {
+
+                let curr_ioc = source.rsplit_once('/').unwrap().1;
+
+                trace!("source dir: {:?}", curr_ioc);
                 // TODO: `match` this to create pleasing Error log
-                IOC::new(
+                match IOC::new(
                     source,
                     &stage_root,
                     &destination_root,
                     &shellbox_root,
                     &template_dir,
-                )
-                .expect("from_list failed")
+                ){
+                    Ok(ioc) => Some(ioc) ,
+                    Err(e) => {
+                        error!("{} Failed to create IOC from {:?}, error: {:?}", cross!(),curr_ioc, e);
+                        None
+                    }
+                }
+                // .expect("from_list failed")
             })
             .collect()
     }
@@ -151,6 +185,52 @@ impl IOC {
         Ok(())
     }
 }
+
+
+
+fn check_ioc_type(source_dir: impl AsRef<Path>)-> Option<IocType> {
+    let start_script = source_dir.as_ref().join("startup.iocsh");
+
+    if start_script.is_file() {
+        trace!("{} Found ioc: {}", tick!(), source_dir.as_ref().display());
+        return Some(IocType::Compiled);
+    }
+    else {
+        match check_python(&source_dir.as_ref().display().to_string()) {
+            Ok(_) => {
+                // trace!("Found python ioc {}", &ioc.name);
+                // ioc.config.ioc.python_based = true;
+                return Some(IocType::Python);
+            }
+            Err(_) => {}
+        }
+    }
+    return None;
+}
+
+fn check_python(dir: &str) -> io::Result<()> {
+    let pattern = format!("{}/**/*.py", dir.to_lowercase());
+
+    // Use glob to find Python files and handle errors
+    let entries = glob(&pattern)
+        .map_err(|e| io::Error::new(io::ErrorKind::InvalidInput, e))?; // Convert glob error to io::Error
+
+    for entry in entries {
+        match entry {
+            Ok(path) => {
+                if path.is_file() {
+                    trace!("{} Found at least one Python file: {}", tick!(), path.display());
+                    return Ok(());
+                }
+            }
+            Err(err) => return Err(io::Error::new(io::ErrorKind::Other, err)),
+        }
+    }
+
+    warn!("{} No Python files found.", exclaim!());
+    Err(io::Error::new(io::ErrorKind::NotFound, "No Python files found"))
+}
+
 
 #[cfg(test)]
 mod tests {
