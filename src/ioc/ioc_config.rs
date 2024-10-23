@@ -15,6 +15,7 @@ pub struct IocConfig {
     pub command_args: String,
     // pub name: Option<String>,
     pub procserv_opts: String,
+    pub python_based: bool,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -37,6 +38,8 @@ impl Settings {
             .set_default("ioc.command_args", "startup.iocsh")
             .unwrap()
             .set_default("ioc.procserv_opts", "")
+            .unwrap()
+            .set_default("ioc.python_based", "false")
             .unwrap()
             // local dev configuration
             .add_source(File::with_name(config_file).required(false))

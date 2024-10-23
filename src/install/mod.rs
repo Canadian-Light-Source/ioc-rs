@@ -41,6 +41,12 @@ pub fn ioc_install(
         &shellbox_root,
         &template_dir,
     );
+
+    if ioc_list.is_empty(){
+        error!("{} ioc list empty - Finishing process", cross!());
+        return Ok(());
+    }
+
     trace!("{} ioc list created", tick!());
 
     for ioc in &ioc_list {

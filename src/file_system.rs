@@ -48,6 +48,11 @@ pub fn copy_recursively(source: impl AsRef<Path>, destination: impl AsRef<Path>)
             continue;
         }
 
+        // skip __pycache__ directory
+        if entry.file_name().into_string().unwrap().starts_with("__pycache__") {
+            continue;
+        }
+
         let filetype = entry.file_type()?;
         if filetype.is_dir() {
             if entry.file_name().into_string().unwrap() == "cfg" {
