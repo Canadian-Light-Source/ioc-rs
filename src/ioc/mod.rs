@@ -68,7 +68,6 @@ impl IOC {
             .unwrap()
             .to_string();
         let stage = stage_root.as_ref().join(&name);
-        let destination = destination_root.as_ref().join(&name);
         let data = destination_root.as_ref().join("data").join(&name);
         let hash_file = data.join("hash");
         let config = match ioc_config::Settings::build(
@@ -97,7 +96,10 @@ impl IOC {
                         );
                         Err("Could not find source of IOC.")
                     },
-                    Some(ioctype) => {
+                    Some(IocType::Compiled) => {
+
+                        let destination = destination_root.as_ref().join(&name);
+
                         Ok(IOC {
                         name,
                         source: source.as_ref().to_path_buf(),
@@ -108,9 +110,25 @@ impl IOC {
                         shellbox_root: shellbox_root.as_ref().to_path_buf(),
                         config,
                         templates: template_root.as_ref().to_path_buf(),
-                        ioc_type: ioctype,
+                        ioc_type: IocType::Compiled,
                         })
-                    } 
+                    },
+                    Some(IocType::Python) => {
+                        let destination = destination_root.as_ref().join("python").join(&name);
+                        
+                        Ok(IOC {
+                        name,
+                        source: source.as_ref().to_path_buf(),
+                        stage,
+                        data,
+                        hash_file,
+                        destination,
+                        shellbox_root: shellbox_root.as_ref().to_path_buf(),
+                        config,
+                        templates: template_root.as_ref().to_path_buf(),
+                        ioc_type: IocType::Python,
+                        })
+                    },
                 }
             }
             false => {

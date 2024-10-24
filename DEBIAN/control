@@ -1,7 +1,7 @@
 Package: ioc
-Version: 0.19.6
+Version: 0.20.1
 Section: custom
 Priority: optional
 Architecture: amd64
-Maintainer: Niko Kivel <niko.kivel@lightsource.ca>
+Maintainer: Augusto Horita <augusto.horita@lightsource.ca>
 Description: deploy tool for IOC definitions
