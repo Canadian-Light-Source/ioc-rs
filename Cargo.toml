@@ -1,8 +1,8 @@
 [package]
 name = "ioc"
 description = "install ioc definitions"
-version = "0.19.6"
-authors = ["Niko Kivel <niko.kivel@lightsource.ca>"]
+version = "0.20.1"
+authors = ["Niko Kivel <niko.kivel@lightsource.ca>,Augusto Horita <augusto.horita@lightsource.ca>"]
 license = "GPLv3"
 keywords = ["CLS", "deployment", "ioc", "tools"]
 repository = "https://github.lightsource.ca/epics-iocs/ioc/"
