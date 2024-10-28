@@ -188,7 +188,7 @@ impl IOC {
             file_system::remove_dir_contents(&self.destination)?; // prep deploy directory
             trace!("{} removed {:?}", tick!(), &self.destination);
         }
-        file_system::copy_recursively(&self.stage, &self.destination)?;
+        file_system::copy_recursively(&self.stage, &self.destination, matches!(self.ioc_type,IocType::Compiled))?;
         trace!(
             "{} copied {:?} -> {:?}",
             tick!(),

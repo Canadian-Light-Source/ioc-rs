@@ -1,6 +1,7 @@
 use crate::log_macros::exclaim;
 use colored::Colorize;
 use log::warn;
+use std::iter::Flatten;
 use std::path::Path;
 use std::{fs, io};
 
@@ -20,7 +21,7 @@ pub fn remove_dir_contents<P: AsRef<Path>>(path: P) -> io::Result<()> {
 }
 
 /// Copy files from source to destination recursively.
-pub fn copy_recursively(source: impl AsRef<Path>, destination: impl AsRef<Path>) -> io::Result<()> {
+pub fn copy_recursively(source: impl AsRef<Path>, destination: impl AsRef<Path>, flatten:bool) -> io::Result<()> {
     fs::create_dir_all(&destination)?;
     for entry in fs::read_dir(source)? {
         let entry = entry?;
@@ -55,10 +56,15 @@ pub fn copy_recursively(source: impl AsRef<Path>, destination: impl AsRef<Path>)
 
         let filetype = entry.file_type()?;
         if filetype.is_dir() {
-            if entry.file_name().into_string().unwrap() == "cfg" {
-                copy_recursively(entry.path(), destination.as_ref().join(entry.file_name()))?;
-            } else {
-                copy_recursively(entry.path(), destination.as_ref())?; // flatten the structure
+            if flatten == false {
+                copy_recursively(entry.path(), destination.as_ref().join(entry.file_name()),flatten)?;
+            }
+            else {
+                if entry.file_name().into_string().unwrap() == "cfg" {
+                    copy_recursively(entry.path(), destination.as_ref().join(entry.file_name()),flatten)?;
+                } else {
+                    copy_recursively(entry.path(), destination.as_ref(),flatten)?; // flatten the structure
+                }
             }
         } else {
             fs::copy(entry.path(), destination.as_ref().join(entry.file_name()))?;
@@ -92,7 +98,7 @@ mod tests {
         let nested_file = target_dir.join("nested_file.txt");
         let cfg_file = target_dir.join("cfg/file_in_cfg_dir.txt");
 
-        copy_recursively(source_dir, &target_dir).unwrap();
+        copy_recursively(source_dir, &target_dir,true).unwrap();
 
         // check if all files made it
         assert!(empty_file.exists());

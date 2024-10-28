@@ -24,7 +24,7 @@ pub fn stage(ioc: &IOC) -> io::Result<()> {
         }
     }
 
-    match file_system::copy_recursively(&ioc.source, &ioc.stage) {
+    match file_system::copy_recursively(&ioc.source, &ioc.stage,matches!(ioc.ioc_type,IocType::Compiled)) {
         Ok(_) => debug!(
             "{} copied {:?} -> {:?}",
             tick!(),
