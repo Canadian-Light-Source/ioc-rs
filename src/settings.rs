@@ -55,7 +55,7 @@ pub fn cfg_path_to_string<T: AsRef<Path>>(path: Option<T>) -> Option<String> {
 
 /// checks if the path is a file and returns the path as `String` if so, else return an error.
 fn get_path_if_is_file<P: AsRef<Path>>(path: P) -> io::Result<String> {
-    debug!("searching for config file in: {:?}", path.as_ref());
+    debug!("searching for ioc-rs config file in: {:?}", path.as_ref());
     match path.as_ref().is_file() {
         true => Ok(path.as_ref().to_str().unwrap().to_string()),
         false => Err(io::Error::new(io::ErrorKind::NotFound, "file not found")),

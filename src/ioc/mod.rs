@@ -239,31 +239,6 @@ fn check_ioc_type(source_dir: impl AsRef<Path>)-> Option<IocType> {
     return None;
 }
 
-// // search for python file
-// fn search_python(dir: &str) -> io::Result<()> {
-//     let pattern = format!("{}/**/*.py", dir.to_lowercase());
-
-//     // Use glob to find Python files and handle errors
-//     let entries = glob(&pattern)
-//         .map_err(|e| io::Error::new(io::ErrorKind::InvalidInput, e))?; // Convert glob error to io::Error
-
-//     for entry in entries {
-//         match entry {
-//             Ok(path) => {
-//                 if path.is_file() {
-//                     trace!("{} Found at least one Python file: {}", tick!(), path.display());
-//                     return Ok(());
-//                 }
-//             }
-//             Err(err) => return Err(io::Error::new(io::ErrorKind::Other, err)),
-//         }
-//     }
-
-//     warn!("{} No Python files found.", exclaim!());
-//     Err(io::Error::new(io::ErrorKind::NotFound, "No Python files found"))
-// }
-
-
 #[cfg(test)]
 mod tests {
     // Note this useful idiom: importing names from outer (for mod tests) scope.

@@ -13,12 +13,12 @@ use crate::log_macros::{cross, tick,exclaim};
 pub const CONDA_ENV_DIR: &str = "env";
 
 /// Customized Conda environment yaml description.
-pub const CONDA_ENV_CFG: &str = "config.yaml";
+pub const CONDA_ENV_CFG: &str = "conda_config.yaml";
 
 
 // search for python file
 pub fn search_python(dir: &str) -> io::Result<()> {
-    let pattern = format!("{}/**/*.py", dir.to_lowercase());
+    let pattern = format!("{}/**/*.py", dir);
 
     // Use glob to find Python files and handle errors
     let entries = glob(&pattern)

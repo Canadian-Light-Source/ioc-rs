@@ -1,7 +1,6 @@
 use crate::log_macros::exclaim;
 use colored::Colorize;
 use log::warn;
-use std::iter::Flatten;
 use std::path::Path;
 use std::{fs, io};
 
