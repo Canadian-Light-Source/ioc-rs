@@ -1,4 +1,4 @@
-FROM rust:1.76 as builder
+FROM rust:1.82 AS builder
 
 WORKDIR /usr/src/ioc
 COPY . .
@@ -34,3 +34,5 @@ RUN dpkg-deb --build /ioc-package && \
 FROM scratch AS package
 
 COPY --from=pkg-build /*.deb /
+
+# sudo docker run -it --rm -v ${PWD}:/opt/epics/build -v /opt/epics/modules/:/opt/epics/modules -u ${UID}:10001 docker.clsi.ca/cid/x86_64_debian12_epics707:latest
