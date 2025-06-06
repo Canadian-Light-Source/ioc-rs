@@ -1,7 +1,8 @@
 # system default configuration for production `ioc`
 # this file is mandatory and needs to placed in `/opt/apps/ioc/config/`
 [filesystem]
-stage = "/tmp/ioc/stage/"
+# stage = "/tmp/ioc/stage/"
+stage = "$(XDG_RUNTIME_DIR)/ioc/stage/"
 deploy = "/opt/ioc/"
 shellbox = "/opt/ioc/hosts/"
 

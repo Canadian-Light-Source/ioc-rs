@@ -3,7 +3,7 @@
   hosts: ioc-hosts
   become: true
   vars:
-    ansible_remote_tmp: /tmp
+    ansible_remote_tmp: $(XDG_RUNTIME_DIR)
 
   tasks:
   - name: Recursively remove /opt/apps/ioc
