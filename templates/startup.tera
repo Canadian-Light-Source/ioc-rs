@@ -1,6 +1,6 @@
 {% include "header.tera" %}
 
-epicsEnvSet("IOC","$(IOC={{ IOC }})")
+epicsEnvSet IOC {{ IOC }}
 epicsEnvSet ENGINEER {{ user }}
 
 require clsStartup $(clsStartup_VERSION=ifexists)
