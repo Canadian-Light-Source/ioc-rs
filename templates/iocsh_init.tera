@@ -1,0 +1,1 @@
+export EPICS_IOCSH_HISTFILE="${IOC_DIR=.}/../data/${IOC}/.iocsh_history"

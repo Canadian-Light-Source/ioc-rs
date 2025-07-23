@@ -23,7 +23,14 @@ pub fn ioc_install(
     force: &bool,
 ) -> io::Result<()> {
     let unique_iocs = check_ioc_list(iocs)?;
-    let stage_root = settings.get::<String>("filesystem.stage").unwrap();
+    let stage_root = match settings.get::<String>("filesystem.stage") {
+            Ok(env_key) => match env::var(&env_key) {
+                Ok(val) => val + "/ioc/stage",
+                Err(_) => "/tmp/ioc/stage".to_string()  // Env var not set
+            },
+            Err(_) =>  "/tmp/ioc/stage".to_string()   // YAML path not found or wrong type
+        };
+
     let deploy_root = settings.get::<String>("filesystem.deploy").unwrap();
     let shellbox_root = settings.get::<String>("filesystem.shellbox").unwrap();
     let template_dir = settings.get::<String>("app.template_directory").unwrap();

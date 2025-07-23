@@ -4,3 +4,4 @@ MTEST*
 /dev
 tarpaulin-report.html
 *.profraw
+deb-package*

@@ -2,6 +2,7 @@ use std::io::{self, Error};
 
 use std::path::Path;
 use std::process::exit;
+use std::env;
 // for CLI
 use clap::{CommandFactory, Parser};
 
@@ -91,7 +92,14 @@ fn main() -> io::Result<()> {
         }
         Some(Commands::Uninstall(args)) => {
             let source = Path::new(&args.ioc);
-            let stage_root = settings.get::<String>("filesystem.stage").unwrap();
+            let stage_root = match settings.get::<String>("filesystem.stage") {
+                    Ok(env_key) => match env::var(&env_key) {
+                        Ok(val) => val + "/ioc/stage",
+                        Err(_) => "/tmp/ioc/stage".to_string()  // Env var not set
+                    },
+                    Err(_) =>  "/tmp/ioc/stage".to_string()   // YAML path not found or wrong type
+                };
+
             let deploy_root = settings.get::<String>("filesystem.deploy").unwrap();
             let shellbox_root = settings.get::<String>("filesystem.shellbox").unwrap();
             let template_dir = settings.get::<String>("app.template_directory").unwrap();
@@ -129,13 +137,14 @@ fn main() -> io::Result<()> {
         Some(Commands::Stage(args)) => {
             info!("----- {} -----", args.ioc.blue().bold());
             let source = Path::new(&args.ioc);
-            let stage_root = match &args.path {
-                Some(p) => {
-                    info!("staging in {}", p);
-                    p.clone()
-                }
-                None => settings.get::<String>("filesystem.stage").unwrap(),
-            };
+            let stage_root = match settings.get::<String>("filesystem.stage") {
+                    Ok(env_key) => match env::var(&env_key) {
+                        Ok(val) => val + "/ioc/stage",
+                        Err(_) => "/tmp/ioc/stage".to_string()  // Env var not set
+                    },
+                    Err(_) =>  "/tmp/ioc/stage".to_string()   // YAML path not found or wrong type
+                };
+
             let deploy_root = settings.get::<String>("filesystem.deploy").unwrap();
             let shellbox_root = settings.get::<String>("filesystem.shellbox").unwrap();
             let template_dir = settings.get::<String>("app.template_directory").unwrap();
