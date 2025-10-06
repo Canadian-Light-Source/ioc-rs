@@ -16,28 +16,23 @@ pub const CONDA_ENV_DIR: &str = "env";
 pub const CONDA_ENV_CFG: &str = "conda_config.yaml";
 
 
-// search for python file
-pub fn search_python(dir: &str) -> io::Result<()> {
-    let pattern = format!("{}/**/*.py", dir);
+/// Check if the directory contains Python files, indicating it's a Python IOC
+pub fn is_python_ioc(dir: impl AsRef<Path>) -> bool {
+    let pattern = format!("{}/**/*.py", dir.as_ref().display());
 
-    // Use glob to find Python files and handle errors
-    let entries = glob(&pattern)
-        .map_err(|e| io::Error::new(io::ErrorKind::InvalidInput, e))?; // Convert glob error to io::Error
-
-    for entry in entries {
-        match entry {
-            Ok(path) => {
-                if path.is_file() {
-                    trace!("{} Found at least one Python file: {}", tick!(), path.display());
-                    return Ok(());
-                }
-            }
-            Err(err) => return Err(io::Error::new(io::ErrorKind::Other, err)),
+    // Use glob to find Python files
+    if let Ok(entries) = glob(&pattern) {
+        let has_python_files = entries.count() > 0;
+        if has_python_files {
+            trace!("{} Found Python files in directory", tick!());
+        } else {
+            trace!("{} No Python files found", exclaim!());
         }
+        has_python_files
+    } else {
+        trace!("{} Failed to search for Python files", exclaim!());
+        false
     }
-
-    warn!("{} No Python files found.", exclaim!());
-    Err(io::Error::new(io::ErrorKind::NotFound, "No Python files found"))
 }
 
 

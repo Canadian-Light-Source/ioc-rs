@@ -219,24 +219,20 @@ impl IOC {
 
 
 // check if IOC is compiled or python
-fn check_ioc_type(source_dir: impl AsRef<Path>)-> Option<IocType> {
-    let start_script = source_dir.as_ref().join("startup.iocsh");
+fn check_ioc_type(source_dir: impl AsRef<Path>) -> Option<IocType> {
+    let source_path = source_dir.as_ref();
+    let start_script = source_path.join("startup.iocsh");
 
     if start_script.is_file() {
-        trace!("{} Found ioc: {}", tick!(), source_dir.as_ref().display());
-        return Some(IocType::Compiled);
+        trace!("{} Found compiled IOC: {}", tick!(), source_path.display());
+        Some(IocType::Compiled)
+    } else if python_ioc::is_python_ioc(source_path) {
+        trace!("{} Found Python IOC: {}", tick!(), source_path.display());
+        Some(IocType::Python)
+    } else {
+        trace!("{} No IOC type detected: {}", tick!(), source_path.display());
+        None
     }
-    else {
-        match python_ioc::search_python(&source_dir.as_ref().display().to_string()) {
-            Ok(_) => {
-                // trace!("Found python ioc {}", &ioc.name);
-                // ioc.config.ioc.python_based = true;
-                return Some(IocType::Python);
-            }
-            Err(_) => {}
-        }
-    }
-    return None;
 }
 
 #[cfg(test)]
