@@ -24,12 +24,12 @@ pub fn ioc_install(
 ) -> io::Result<()> {
     let unique_iocs = check_ioc_list(iocs)?;
     let stage_root = match settings.get::<String>("filesystem.stage") {
-            Ok(env_key) => match env::var(&env_key) {
-                Ok(val) => val + "/ioc/stage",
-                Err(_) => "/tmp/ioc/stage".to_string()  // Env var not set
-            },
-            Err(_) =>  "/tmp/ioc/stage".to_string()   // YAML path not found or wrong type
-        };
+        Ok(env_key) => match env::var(&env_key) {
+            Ok(val) => val + "/ioc/stage",
+            Err(_) => "/tmp/ioc/stage".to_string(), // Env var not set
+        },
+        Err(_) => "/tmp/ioc/stage".to_string(), // YAML path not found or wrong type
+    };
 
     let deploy_root = settings.get::<String>("filesystem.deploy").unwrap();
     let shellbox_root = settings.get::<String>("filesystem.shellbox").unwrap();
@@ -49,7 +49,7 @@ pub fn ioc_install(
         &template_dir,
     );
 
-    if ioc_list.is_empty(){
+    if ioc_list.is_empty() {
         error!("{} ioc list empty - Finishing process", cross!());
         return Ok(());
     }

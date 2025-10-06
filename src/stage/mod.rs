@@ -24,7 +24,11 @@ pub fn stage(ioc: &IOC) -> io::Result<()> {
         }
     }
 
-    match file_system::copy_recursively(&ioc.source, &ioc.stage,matches!(ioc.ioc_type,IocType::Compiled)) {
+    match file_system::copy_recursively(
+        &ioc.source,
+        &ioc.stage,
+        matches!(ioc.ioc_type, IocType::Compiled),
+    ) {
         Ok(_) => debug!(
             "{} copied {:?} -> {:?}",
             tick!(),
@@ -52,7 +56,7 @@ pub fn stage(ioc: &IOC) -> io::Result<()> {
             return Err(e);
         }
     }
-    
+
     match ioc.ioc_type {
         IocType::Compiled => {
             match render::render_startup(ioc, ioc.templates.as_os_str().to_str().unwrap()) {

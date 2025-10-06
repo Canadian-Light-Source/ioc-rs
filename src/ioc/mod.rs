@@ -14,8 +14,8 @@ use crate::{
 mod diff;
 pub mod hash_ioc;
 
-pub mod python_ioc;
 pub(crate) mod ioc_config;
+pub mod python_ioc;
 
 #[derive(Debug, Clone)]
 pub enum IocType {
@@ -87,20 +87,15 @@ impl IOC {
 
         // check source directory exists
         match source.as_ref().is_dir() {
-            true => {
-                match check_ioc_type(&source){
-                    None => {
-                        warn!(
-                            "{} IOC source not found.",
-                            exclaim!(),
-                        );
-                        Err("Could not find source of IOC.")
-                    },
-                    Some(IocType::Compiled) => {
+            true => match check_ioc_type(&source) {
+                None => {
+                    warn!("{} IOC source not found.", exclaim!(),);
+                    Err("Could not find source of IOC.")
+                }
+                Some(IocType::Compiled) => {
+                    let destination = destination_root.as_ref().join(&name);
 
-                        let destination = destination_root.as_ref().join(&name);
-
-                        Ok(IOC {
+                    Ok(IOC {
                         name,
                         source: source.as_ref().to_path_buf(),
                         stage,
@@ -111,12 +106,12 @@ impl IOC {
                         config,
                         templates: template_root.as_ref().to_path_buf(),
                         ioc_type: IocType::Compiled,
-                        })
-                    },
-                    Some(IocType::Python) => {
-                        let destination = destination_root.as_ref().join("python").join(&name);
-                        
-                        Ok(IOC {
+                    })
+                }
+                Some(IocType::Python) => {
+                    let destination = destination_root.as_ref().join("python").join(&name);
+
+                    Ok(IOC {
                         name,
                         source: source.as_ref().to_path_buf(),
                         stage,
@@ -127,10 +122,9 @@ impl IOC {
                         config,
                         templates: template_root.as_ref().to_path_buf(),
                         ioc_type: IocType::Python,
-                        })
-                    },
+                    })
                 }
-            }
+            },
             false => {
                 error!(
                     "{} IOC source directory not found: {}",
@@ -140,7 +134,6 @@ impl IOC {
                 Err("Could not find source directory of IOC.")
             }
         }
-
     }
 
     pub fn from_list(
@@ -153,7 +146,6 @@ impl IOC {
         debug!("collecting iocs ...");
         list.iter()
             .filter_map(|source| {
-
                 let curr_ioc = source.rsplit_once('/').unwrap().1;
 
                 trace!("source dir: {:?}", curr_ioc);
@@ -164,10 +156,15 @@ impl IOC {
                     &destination_root,
                     &shellbox_root,
                     &template_dir,
-                ){
-                    Ok(ioc) => Some(ioc) ,
+                ) {
+                    Ok(ioc) => Some(ioc),
                     Err(e) => {
-                        error!("{} Failed to create IOC from {:?}, error: {:?}", cross!(),curr_ioc, e);
+                        error!(
+                            "{} Failed to create IOC from {:?}, error: {:?}",
+                            cross!(),
+                            curr_ioc,
+                            e
+                        );
                         None
                     }
                 }
@@ -188,23 +185,17 @@ impl IOC {
             file_system::remove_dir_contents(&self.destination)?; // prep deploy directory
             trace!("{} removed {:?}", tick!(), &self.destination);
         }
-        file_system::copy_recursively(&self.stage, &self.destination, matches!(self.ioc_type,IocType::Compiled))?;
+        file_system::copy_recursively(
+            &self.stage,
+            &self.destination,
+            matches!(self.ioc_type, IocType::Compiled),
+        )?;
         trace!(
             "{} copied {:?} -> {:?}",
             tick!(),
             &self.stage.as_path(),
             &self.destination.as_path()
         );
-
-        // for python IOC, create custom env if present
-        if matches!(self.ioc_type,IocType::Python) {
-
-                match python_ioc::create_conda_env( &self.destination ) {
-                    Ok(_) => {},
-                    Err(_) => {}
-                }
-        }
-
 
         hash_ioc::hash_ioc(self)?;
         debug!(
@@ -216,7 +207,6 @@ impl IOC {
         Ok(())
     }
 }
-
 
 // check if IOC is compiled or python
 fn check_ioc_type(source_dir: impl AsRef<Path>) -> Option<IocType> {
@@ -230,7 +220,11 @@ fn check_ioc_type(source_dir: impl AsRef<Path>) -> Option<IocType> {
         trace!("{} Found Python IOC: {}", tick!(), source_path.display());
         Some(IocType::Python)
     } else {
-        trace!("{} No IOC type detected: {}", tick!(), source_path.display());
+        trace!(
+            "{} No IOC type detected: {}",
+            tick!(),
+            source_path.display()
+        );
         None
     }
 }
