@@ -130,6 +130,21 @@ MTEST_NIKO02/
 ----
 ====
 
+=== Python IOC support
+
+There is some initial support for Python based IOCs.
+
+NOTE: The support is limited, and if you ask me (kivel) I'd remove it all together.
+  Call me old, call be backwards, but to me there is good reason to create IOCs in python.
+
+At the moment, the `install` sub-command will detect _any_ python file in the definition directory and assume it is a python IOC.
+This will trigger a different deployment path, i.e. `<deploy_path_from_config>/python/$+{IOC}+`.
+Neither nice, nor flexible, but it works and keeps them in a separate place.
+So it's easier to delete them all, if needed.
+
+NOTE: The deployment will flatten the directory structure, except for a `cfg` and `env` directory.
+  So, if you have a python environment, place it in an `env` directory!
+
 === What it does
 
 Takes at least one directory with ioc-definitions, as explicit path, space separated list of paths or glob, for deployment.
