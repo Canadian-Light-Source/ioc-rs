@@ -134,6 +134,8 @@ impl Settings {
 mod tests {
     // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
+    use serial_test::serial;
+    use std::env;
     use tempfile::tempdir;
 
     #[test]
@@ -162,25 +164,37 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn config_from_home_none() {
-        assert_eq!(config_from_home(), None);
+        // Set HOME to a non-existent directory
+        let temp_dir = tempfile::Builder::new().tempdir().unwrap();
+        let non_existent_dir = temp_dir.path().join("non_existent");
+        env::set_var(HOME, &non_existent_dir);
+
+        let result = config_from_home();
+
+        assert_eq!(result, None);
     }
 
     #[test]
+    #[serial]
     fn config_from_config_path_success() -> io::Result<()> {
         let temp_dir = tempdir()?;
         let cfg_file = temp_dir.path().join(IOC_CONFIG_NAME);
         std::fs::write(&cfg_file, "")?;
         env::set_var("IOC_CONFIG_FILE", cfg_file.as_os_str());
 
-        assert_eq!(
-            config_from_config_path(),
-            Some(cfg_file.to_str().unwrap().to_string())
-        );
+        let result = config_from_config_path();
+        
+        // Clean up the environment variable we set
+        env::remove_var("IOC_CONFIG_FILE");
+
+        assert_eq!(result, Some(cfg_file.to_str().unwrap().to_string()));
         Ok(())
     }
 
     #[test]
+    #[serial]
     fn config_from_xdg_path_root_success() -> io::Result<()> {
         let temp_dir = tempdir()?;
 
@@ -196,23 +210,24 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn config_from_xdg_path_sub_success() -> io::Result<()> {
         let temp_dir = tempdir()?;
         env::set_var(XDG_CONFIG_HOME, temp_dir.path().as_os_str());
-        let temp_dir = temp_dir.path().join(IOC_DIR);
-        std::fs::create_dir_all(&temp_dir)?;
+        let ioc_dir = temp_dir.path().join(IOC_DIR);
+        std::fs::create_dir_all(&ioc_dir)?;
 
-        let cfg_file = temp_dir.join(IOC_CONFIG_NAME);
+        let cfg_file = ioc_dir.join(IOC_CONFIG_NAME);
         std::fs::write(&cfg_file, "")?;
 
-        assert_eq!(
-            config_from_xdg_path(),
-            Some(cfg_file.to_str().unwrap().to_string())
-        );
+        let result = config_from_xdg_path();
+
+        assert_eq!(result, Some(cfg_file.to_str().unwrap().to_string()));
         Ok(())
     }
 
     #[test]
+    #[serial]
     fn config_from_home_root_success() -> io::Result<()> {
         let temp_dir = tempdir()?;
 
@@ -228,20 +243,22 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn config_from_home_config_success() -> io::Result<()> {
         let temp_dir = tempdir()?;
         env::set_var(HOME, temp_dir.path().as_os_str());
-        let temp_dir = temp_dir.path().join(CONFIG_DIR);
-        let temp_dir = temp_dir.join(IOC_DIR);
-        std::fs::create_dir_all(&temp_dir)?;
+        // Clear XDG to avoid interference
+        env::remove_var(XDG_CONFIG_HOME);
 
-        let cfg_file = temp_dir.join(IOC_CONFIG_NAME);
+        let config_dir = temp_dir.path().join(CONFIG_DIR).join(IOC_DIR);
+        std::fs::create_dir_all(&config_dir)?;
+
+        let cfg_file = config_dir.join(IOC_CONFIG_NAME);
         std::fs::write(&cfg_file, "")?;
 
-        assert_eq!(
-            config_from_home(),
-            Some(cfg_file.to_str().unwrap().to_string())
-        );
+        let result = config_from_home();
+
+        assert_eq!(result, Some(cfg_file.to_str().unwrap().to_string()));
         Ok(())
     }
 }

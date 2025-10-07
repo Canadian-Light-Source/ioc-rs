@@ -7,15 +7,15 @@ use log::{debug, error, trace, warn};
 
 use crate::log_macros::exclaim;
 use crate::{
-    file_system,
+    file_system::{self, CopyMode},
     log_macros::{cross, tick},
 };
 
 mod diff;
 pub mod hash_ioc;
 
-pub mod python_ioc;
 pub(crate) mod ioc_config;
+pub mod python_ioc;
 
 #[derive(Debug, Clone)]
 pub enum IocType {
@@ -87,20 +87,15 @@ impl IOC {
 
         // check source directory exists
         match source.as_ref().is_dir() {
-            true => {
-                match check_ioc_type(&source){
-                    None => {
-                        warn!(
-                            "{} IOC source not found.",
-                            exclaim!(),
-                        );
-                        Err("Could not find source of IOC.")
-                    },
-                    Some(IocType::Compiled) => {
+            true => match check_ioc_type(&source) {
+                None => {
+                    warn!("{} IOC source not found.", exclaim!(),);
+                    Err("Could not find source of IOC.")
+                }
+                Some(IocType::Compiled) => {
+                    let destination = destination_root.as_ref().join(&name);
 
-                        let destination = destination_root.as_ref().join(&name);
-
-                        Ok(IOC {
+                    Ok(IOC {
                         name,
                         source: source.as_ref().to_path_buf(),
                         stage,
@@ -111,12 +106,13 @@ impl IOC {
                         config,
                         templates: template_root.as_ref().to_path_buf(),
                         ioc_type: IocType::Compiled,
-                        })
-                    },
-                    Some(IocType::Python) => {
-                        let destination = destination_root.as_ref().join("python").join(&name);
-                        
-                        Ok(IOC {
+                    })
+                }
+                Some(IocType::Python) => {
+                    // TODO(kivel): implement Python IOC handling via config file
+                    let destination = destination_root.as_ref().join("python").join(&name);
+
+                    Ok(IOC {
                         name,
                         source: source.as_ref().to_path_buf(),
                         stage,
@@ -127,10 +123,9 @@ impl IOC {
                         config,
                         templates: template_root.as_ref().to_path_buf(),
                         ioc_type: IocType::Python,
-                        })
-                    },
+                    })
                 }
-            }
+            },
             false => {
                 error!(
                     "{} IOC source directory not found: {}",
@@ -140,7 +135,6 @@ impl IOC {
                 Err("Could not find source directory of IOC.")
             }
         }
-
     }
 
     pub fn from_list(
@@ -153,7 +147,6 @@ impl IOC {
         debug!("collecting iocs ...");
         list.iter()
             .filter_map(|source| {
-
                 let curr_ioc = source.rsplit_once('/').unwrap().1;
 
                 trace!("source dir: {:?}", curr_ioc);
@@ -164,10 +157,15 @@ impl IOC {
                     &destination_root,
                     &shellbox_root,
                     &template_dir,
-                ){
-                    Ok(ioc) => Some(ioc) ,
+                ) {
+                    Ok(ioc) => Some(ioc),
                     Err(e) => {
-                        error!("{} Failed to create IOC from {:?}, error: {:?}", cross!(),curr_ioc, e);
+                        error!(
+                            "{} Failed to create IOC from {:?}, error: {:?}",
+                            cross!(),
+                            curr_ioc,
+                            e
+                        );
                         None
                     }
                 }
@@ -188,23 +186,13 @@ impl IOC {
             file_system::remove_dir_contents(&self.destination)?; // prep deploy directory
             trace!("{} removed {:?}", tick!(), &self.destination);
         }
-        file_system::copy_recursively(&self.stage, &self.destination, matches!(self.ioc_type,IocType::Compiled))?;
+        file_system::copy_recursively(&self.stage, &self.destination, CopyMode::Preserve)?;
         trace!(
             "{} copied {:?} -> {:?}",
             tick!(),
             &self.stage.as_path(),
             &self.destination.as_path()
         );
-
-        // for python IOC, create custom env if present
-        if matches!(self.ioc_type,IocType::Python) {
-
-                match python_ioc::create_conda_env( &self.destination ) {
-                    Ok(_) => {},
-                    Err(_) => {}
-                }
-        }
-
 
         hash_ioc::hash_ioc(self)?;
         debug!(
@@ -217,26 +205,25 @@ impl IOC {
     }
 }
 
-
 // check if IOC is compiled or python
-fn check_ioc_type(source_dir: impl AsRef<Path>)-> Option<IocType> {
-    let start_script = source_dir.as_ref().join("startup.iocsh");
+fn check_ioc_type(source_dir: impl AsRef<Path>) -> Option<IocType> {
+    let source_path = source_dir.as_ref();
+    let start_script = source_path.join("startup.iocsh");
 
     if start_script.is_file() {
-        trace!("{} Found ioc: {}", tick!(), source_dir.as_ref().display());
-        return Some(IocType::Compiled);
+        trace!("{} Found compiled IOC: {}", tick!(), source_path.display());
+        Some(IocType::Compiled)
+    } else if python_ioc::is_python_ioc(source_path) {
+        trace!("{} Found Python IOC: {}", tick!(), source_path.display());
+        Some(IocType::Python)
+    } else {
+        trace!(
+            "{} No IOC type detected: {}",
+            tick!(),
+            source_path.display()
+        );
+        None
     }
-    else {
-        match python_ioc::search_python(&source_dir.as_ref().display().to_string()) {
-            Ok(_) => {
-                // trace!("Found python ioc {}", &ioc.name);
-                // ioc.config.ioc.python_based = true;
-                return Some(IocType::Python);
-            }
-            Err(_) => {}
-        }
-    }
-    return None;
 }
 
 #[cfg(test)]

@@ -24,12 +24,12 @@ pub fn ioc_install(
 ) -> io::Result<()> {
     let unique_iocs = check_ioc_list(iocs)?;
     let stage_root = match settings.get::<String>("filesystem.stage") {
-            Ok(env_key) => match env::var(&env_key) {
-                Ok(val) => val + "/ioc/stage",
-                Err(_) => "/tmp/ioc/stage".to_string()  // Env var not set
-            },
-            Err(_) =>  "/tmp/ioc/stage".to_string()   // YAML path not found or wrong type
-        };
+        Ok(env_key) => match env::var(&env_key) {
+            Ok(val) => val + "/ioc/stage",
+            Err(_) => "/tmp/ioc/stage".to_string(), // Env var not set
+        },
+        Err(_) => "/tmp/ioc/stage".to_string(), // YAML path not found or wrong type
+    };
 
     let deploy_root = settings.get::<String>("filesystem.deploy").unwrap();
     let shellbox_root = settings.get::<String>("filesystem.shellbox").unwrap();
@@ -49,7 +49,7 @@ pub fn ioc_install(
         &template_dir,
     );
 
-    if ioc_list.is_empty(){
+    if ioc_list.is_empty() {
         error!("{} ioc list empty - Finishing process", cross!());
         return Ok(());
     }
@@ -221,30 +221,46 @@ mod tests {
 
         let mut expected: Vec<String> = input
             .iter()
-            .map(|&p| temp_dir.path().join(p).to_str().unwrap().to_string())
+            .map(|&p| {
+                fs::canonicalize(temp_dir.path().join(p))
+                    .unwrap()
+                    .to_str()
+                    .unwrap()
+                    .to_string()
+            })
             .collect();
         expected.sort();
 
         let glob_test = temp_dir.path().join("*").to_str().unwrap().to_string();
-        let res = filter_duplicates(vec![glob_test.clone()])?;
+        let mut res = filter_duplicates(vec![glob_test.clone()])?;
+        res.sort();
         assert_eq!(res, expected);
 
         let foo_test = temp_dir.path().join("foo").to_str().unwrap().to_string();
-        let res = filter_duplicates(vec![glob_test.clone(), foo_test.clone()])?;
+        let mut res = filter_duplicates(vec![glob_test.clone(), foo_test.clone()])?;
+        res.sort();
         assert_eq!(res, expected);
 
         let bar_test = temp_dir.path().join("bar").to_str().unwrap().to_string();
-        let res = filter_duplicates(vec![glob_test.clone(), bar_test.clone()])?;
+        let mut res = filter_duplicates(vec![glob_test.clone(), bar_test.clone()])?;
+        res.sort();
         assert_eq!(res, expected);
 
-        let res = filter_duplicates(vec![bar_test.clone(), foo_test.clone()])?;
+        let mut res = filter_duplicates(vec![bar_test.clone(), foo_test.clone()])?;
+        res.sort();
         assert_eq!(res, expected);
 
         let mut res = filter_duplicates(vec![foo_test])?;
-        assert_eq!(res.pop().unwrap(), expected.pop().unwrap());
+        res.sort();
+        let mut expected_foo = expected.clone();
+        expected_foo.retain(|p| p.ends_with("foo"));
+        assert_eq!(res, expected_foo);
 
         let mut res = filter_duplicates(vec![bar_test])?;
-        assert_eq!(res.pop().unwrap(), expected.pop().unwrap());
+        res.sort();
+        let mut expected_bar = expected.clone();
+        expected_bar.retain(|p| p.ends_with("bar"));
+        assert_eq!(res, expected_bar);
 
         Ok(())
     }
