@@ -109,7 +109,7 @@ impl IOC {
                     })
                 }
                 Some(IocType::Python) => {
-                    /// TODO(kivel): implement Python IOC handling via config file
+                    // TODO(kivel): implement Python IOC handling via config file
                     let destination = destination_root.as_ref().join("python").join(&name);
 
                     Ok(IOC {

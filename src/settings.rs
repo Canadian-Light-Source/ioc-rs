@@ -163,7 +163,23 @@ mod tests {
 
     #[test]
     fn config_from_home_none() {
-        assert_eq!(config_from_home(), None);
+        // Save the original HOME value
+        let original_home = env::var_os(HOME);
+        
+        // Set HOME to a non-existent directory
+        let temp_dir = tempfile::Builder::new().tempdir().unwrap();
+        let non_existent_dir = temp_dir.path().join("non_existent");
+        env::set_var(HOME, &non_existent_dir);
+        
+        let result = config_from_home();
+        
+        // Restore the original HOME value
+        match original_home {
+            Some(home) => env::set_var(HOME, home),
+            None => env::remove_var(HOME),
+        }
+        
+        assert_eq!(result, None);
     }
 
     #[test]
@@ -197,16 +213,27 @@ mod tests {
 
     #[test]
     fn config_from_xdg_path_sub_success() -> io::Result<()> {
+        // Save original environment
+        let original_xdg = env::var_os(XDG_CONFIG_HOME);
+        
         let temp_dir = tempdir()?;
         env::set_var(XDG_CONFIG_HOME, temp_dir.path().as_os_str());
-        let temp_dir = temp_dir.path().join(IOC_DIR);
-        std::fs::create_dir_all(&temp_dir)?;
+        let ioc_dir = temp_dir.path().join(IOC_DIR);
+        std::fs::create_dir_all(&ioc_dir)?;
 
-        let cfg_file = temp_dir.join(IOC_CONFIG_NAME);
+        let cfg_file = ioc_dir.join(IOC_CONFIG_NAME);
         std::fs::write(&cfg_file, "")?;
 
+        let result = config_from_xdg_path();
+        
+        // Restore original environment
+        match original_xdg {
+            Some(xdg) => env::set_var(XDG_CONFIG_HOME, xdg),
+            None => env::remove_var(XDG_CONFIG_HOME),
+        }
+
         assert_eq!(
-            config_from_xdg_path(),
+            result,
             Some(cfg_file.to_str().unwrap().to_string())
         );
         Ok(())
