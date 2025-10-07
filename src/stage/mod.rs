@@ -6,7 +6,11 @@ use log::{debug, error, info, warn};
 use crate::ioc::IocType;
 use crate::log_macros::{cross, exclaim};
 use crate::origin::Origin;
-use crate::{file_system, ioc::IOC, log_macros::tick};
+use crate::{
+    file_system::{self, CopyMode},
+    ioc::IOC,
+    log_macros::tick,
+};
 pub mod render;
 
 pub fn stage(ioc: &IOC) -> io::Result<()> {
@@ -27,7 +31,11 @@ pub fn stage(ioc: &IOC) -> io::Result<()> {
     match file_system::copy_recursively(
         &ioc.source,
         &ioc.stage,
-        matches!(ioc.ioc_type, IocType::Compiled),
+        if matches!(ioc.ioc_type, IocType::Python) {
+            CopyMode::FlattenExcept(vec!["cfg".to_string(), "env".to_string()])
+        } else {
+            CopyMode::preserve_directories()
+        },
     ) {
         Ok(_) => debug!(
             "{} copied {:?} -> {:?}",

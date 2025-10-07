@@ -7,7 +7,7 @@ use log::{debug, error, trace, warn};
 
 use crate::log_macros::exclaim;
 use crate::{
-    file_system,
+    file_system::{self, CopyMode},
     log_macros::{cross, tick},
 };
 
@@ -109,6 +109,7 @@ impl IOC {
                     })
                 }
                 Some(IocType::Python) => {
+                    /// TODO(kivel): implement Python IOC handling via config file
                     let destination = destination_root.as_ref().join("python").join(&name);
 
                     Ok(IOC {
@@ -185,11 +186,7 @@ impl IOC {
             file_system::remove_dir_contents(&self.destination)?; // prep deploy directory
             trace!("{} removed {:?}", tick!(), &self.destination);
         }
-        file_system::copy_recursively(
-            &self.stage,
-            &self.destination,
-            matches!(self.ioc_type, IocType::Compiled),
-        )?;
+        file_system::copy_recursively(&self.stage, &self.destination, CopyMode::Preserve)?;
         trace!(
             "{} copied {:?} -> {:?}",
             tick!(),
