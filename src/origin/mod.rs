@@ -4,7 +4,7 @@ use std::fs::File;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
-use chrono::NaiveDateTime;
+use chrono::DateTime;
 
 /// struct for origin information
 #[derive(Debug, Default, Serialize, Deserialize)]
@@ -51,7 +51,7 @@ impl Origin {
                         origin.author = commit.author().name().unwrap_or_default().to_owned();
                         origin.message = commit.summary().unwrap_or_default().to_owned();
                         origin.commit = oid.to_string();
-                        origin.time = NaiveDateTime::from_timestamp_opt(commit.time().seconds(), 0)
+                        origin.time = DateTime::from_timestamp(commit.time().seconds(), 0)
                             .unwrap_or_default()
                             .to_string();
                         println!("Author: {}", origin.author);
