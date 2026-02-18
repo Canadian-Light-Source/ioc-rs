@@ -135,7 +135,8 @@ MTEST_NIKO02/
 There is some initial support for Python based IOCs.
 
 NOTE: The support is limited, and if you ask me (kivel) I'd remove it all together.
-  Call me old, call me backwards, but to me there is good reason to create IOCs in python.
+  Call me old, call me backwards, but to me, there is no good reason to create IOCs in python.
+  Quote from Timo Korhonen [2026-02-18, tech-talk] "Python-based servers may have their place in some applications, but they are nowhere near a replacement to proper IOCs with field-proven and stable code."
 
 At the moment, the `install` sub-command will detect _any_ python file in the definition directory and assume it is a python IOC.
 This will trigger a different deployment path, i.e. `<deploy_path_from_config>/python/$+{IOC}+`.
